@@ -3,7 +3,7 @@
 
 Ansaea is a sophisticated, "Medical-Luxury" mental health and longevity platform. It is designed to provide actionable clinical protocols driven by unique patient data, delivering a premium "Clinical Precision" user experience.
 
-![Ansaea Architecture](docs/architecture.md)
+[Ansaea Architecture](docs/architecture.md)
 
 ## Tech Stack
 - **Frontend**: React 19, Vite, Vanilla CSS (Custom Design System), Recharts, Lucide React
