@@ -8,35 +8,54 @@ Ansaea is a sophisticated, "Medical-Luxury" mental health and longevity platform
 ## Tech Stack
 - **Frontend**: React 19, Vite, Vanilla CSS (Custom Design System), Recharts, Lucide React
 - **Backend**: Python 3.11, FastAPI, SQLAlchemy (Async), Pydantic
-- **Database**: PostgreSQL 18
-- **Infrastructure**: Docker & Docker Compose
+- **Database**: Neon Cloud Postgres (PostgreSQL 18)
+- **Infrastructure**: Cloud-hosted database, local direct execution (no containers)
 
 ## Quick Start
 
 ### 1. Prerequisites
 Ensure you have the following installed on your system:
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Python](https://www.python.org/) (v3.11 or higher)
+- A [Neon Postgres](https://neon.tech/) account/database.
 
 ### 2. Environment Setup
-Create a `.env` file in the root directory with the following variables:
-```env
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=ansaea_db
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/ansaea_db
-SECRET_KEY=your_super_secret_key_here
-```
+1. Create a `.env` file in the root directory by copying the template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` and fill in your Neon connection string (`DATABASE_URL`). Be sure to use the `postgresql+asyncpg://` scheme with `sslmode=require` for secure async access:
+   ```env
+   DATABASE_URL=postgresql+asyncpg://<USER>:<PASSWORD>@<NEON_HOST>/neondb?sslmode=require
+   SECRET_KEY=your_generated_secure_secret_key
+   ```
 
-### 3. Run the Application
-Start the entire stack (Database, Backend API, and Frontend Vite Server) using Docker Compose:
-
+### 3. Run the Backend API
+Navigate to the `backend/` directory, set up your Python virtual environment, install requirements, and run the server:
 ```bash
-docker compose up -d
-```
+cd backend
+python -m venv venv
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source venv/bin/activate
 
-### 4. Access the App
-- **Frontend App**: [http://localhost:80](http://localhost:80)
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+For more backend details, see the [Backend README](file:///c:/Users/Suraj/Code/Ansaea/backend/README.md).
+
+### 4. Run the Frontend App
+Navigate to the `frontend/` directory, set up your environment variables, install Node dependencies, and start the development server:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+For more frontend details, see the [Frontend README](file:///c:/Users/Suraj/Code/Ansaea/frontend/README.md).
+
+### 5. Access the App
+- **Frontend App**: [http://localhost:5173](http://localhost:5173) (or the port Vite prints)
 - **Backend API Docs (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## Documentation

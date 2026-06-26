@@ -23,4 +23,24 @@ This directory contains the React single-page application for Ansaea.
 
 ## Development
 
-The frontend is served via Vite. In the Docker Compose environment, it runs with `--host 0.0.0.0` and `--usePolling` enabled to support hot-reloading on Windows/WSL filesystems.
+Follow these steps to run the frontend server locally:
+
+### 1. Prerequisites
+- Node.js (v18 or higher)
+- npm (Node Package Manager)
+
+### 2. Environment Setup
+Create a `.env` file in the `frontend` folder or copy the example:
+```bash
+cp .env.example .env
+```
+Ensure `VITE_API_URL` points to your running backend (defaults to `http://localhost:8000/api`).
+
+### 3. Run the App
+Install dependencies and start the Vite dev server:
+```bash
+npm install
+npm run dev
+```
+
+The frontend will run on [http://localhost:5173](http://localhost:5173).

@@ -20,7 +20,7 @@ Ansaea is built on a decoupled Client-Server architecture utilizing a React Sing
   - `database.py`: SQLAlchemy asynchronous engine configuration.
 
 ### 1.3 Database
-- **Technology**: PostgreSQL 18
+- **Technology**: Neon Cloud Postgres (PostgreSQL 18)
 - **Responsibility**: Persistent data storage.
 - **ORM**: SQLAlchemy (`asyncpg` driver).
 - **Schema Highlights**:
