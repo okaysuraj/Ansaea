@@ -56,3 +56,4 @@ backend/wheels/
 backend/*.egg-info/
 backend/.installed.cfg
 backend/*.egg
+backend/ansaea-service-account.json
