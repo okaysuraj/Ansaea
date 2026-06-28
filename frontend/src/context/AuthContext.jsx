@@ -1,46 +1,84 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  sendEmailVerification
+} from 'firebase/auth';
+import { auth } from '../firebase';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('ansaea_token') || null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('ansaea_user');
-    const storedToken = localStorage.getItem('ansaea_token');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Only set user if email is verified
+        if (firebaseUser.emailVerified) {
+          const idToken = await firebaseUser.getIdToken();
+          
+          try {
+            // Fetch real role and username from the database
+            const res = await fetch(`${API_URL}/users/me`, {
+              headers: { 'Authorization': `Bearer ${idToken}` }
+            });
+            const dbUser = await res.json();
+            
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              username: dbUser.username || firebaseUser.email.split('@')[0],
+              role: dbUser.role || "user" 
+            });
+            setToken(idToken);
+          } catch (err) {
+             console.error("Failed to fetch user profile", err);
+             setUser(null);
+             setToken(null);
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+        }
+      } else {
+        setUser(null);
+        setToken(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const register = async (username, email, password, role = "user") => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Save role and username to the backend database before signing out
+      const tempToken = await userCredential.user.getIdToken();
+      await fetch(`${API_URL}/users/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, role }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tempToken}`
+        },
+        body: JSON.stringify({ role, username })
       });
+
+      await sendEmailVerification(userCredential.user);
       
-      const data = await response.json();
+      // Sign out immediately so they have to verify email before logging in
+      await signOut(auth);
       
-      if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed');
-      }
-      
-      localStorage.setItem('ansaea_token', data.access_token);
-      localStorage.setItem('ansaea_user', JSON.stringify({ username: data.username, email: data.email, role: data.role }));
-      
-      setToken(data.access_token);
-      setUser({ username: data.username, email: data.email, role: data.role });
       return true;
     } catch (err) {
       setError(err.message);
@@ -51,23 +89,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.detail || 'Login failed');
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        throw new Error('Please verify your email before logging in.');
       }
       
-      localStorage.setItem('ansaea_token', data.access_token);
-      localStorage.setItem('ansaea_user', JSON.stringify({ username: data.username, email: data.email, role: data.role }));
-      
-      setToken(data.access_token);
-      setUser({ username: data.username, email: data.email, role: data.role });
       return true;
     } catch (err) {
       setError(err.message);
@@ -75,11 +103,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('ansaea_token');
-    localStorage.removeItem('ansaea_user');
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Error signing out: ", err);
+    }
   };
 
   const authenticatedFetch = async (url, options = {}) => {
@@ -88,8 +117,11 @@ export const AuthProvider = ({ children }) => {
       ...options.headers,
     };
     
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (auth.currentUser && auth.currentUser.emailVerified) {
+      const idToken = await auth.currentUser.getIdToken();
+      headers['Authorization'] = `Bearer ${idToken}`;
+    } else if (token) {
+       headers['Authorization'] = `Bearer ${token}`;
     }
     
     const response = await fetch(`${API_URL}${url}`, {
@@ -98,8 +130,8 @@ export const AuthProvider = ({ children }) => {
     });
     
     if (response.status === 401) {
-      logout();
-      throw new Error('Session expired. Please log in again.');
+      await logout();
+      throw new Error('Session expired or unauthorized. Please log in again.');
     }
     
     return response;

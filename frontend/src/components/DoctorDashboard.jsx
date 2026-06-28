@@ -1,10 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, MessageSquare, Calendar, LogOut, Activity, UserCheck } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const { user, logout } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
+  
+  const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const { authenticatedFetch } = useAuth();
+  
+  useEffect(() => {
+    const fetchAppts = async () => {
+      try {
+        const response = await authenticatedFetch('/psychiatrists/appointments');
+        const data = await response.json();
+        if (response.ok) {
+          setAppointments(data);
+          
+          // Extract unique patients from appointments
+          const uniquePatientsMap = {};
+          data.forEach(appt => {
+            if (!uniquePatientsMap[appt.user_id]) {
+              uniquePatientsMap[appt.user_id] = {
+                id: appt.user_id,
+                // In a real app we'd fetch the patient's name, but here we can just use a placeholder
+                name: "Patient " + appt.user_id.substring(0, 4), 
+                lastSeen: appt.date,
+                status: appt.status === 'completed' ? 'Stable' : 'Needs Review'
+              };
+            }
+          });
+          setPatients(Object.values(uniquePatientsMap));
+        }
+      } catch (err) {
+        console.error("Error fetching doctor appointments:", err);
+      }
+    };
+    fetchAppts();
+  }, []);
+
+  const upcomingAppts = appointments.filter(a => a.status === 'upcoming');
 
   const renderView = () => {
     switch (currentView) {
@@ -17,16 +53,16 @@ export default function DoctorDashboard() {
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginTop: '2rem' }}>
                 <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--color-primary)' }}>
-                  <div className="stat-label">Appointments Today</div>
-                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>4</div>
+                  <div className="stat-label">Upcoming Appointments</div>
+                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>{upcomingAppts.length}</div>
                 </div>
                 <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--color-success)' }}>
                   <div className="stat-label">Active Patients</div>
-                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>12</div>
+                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>{patients.length}</div>
                 </div>
                 <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--color-info)' }}>
-                  <div className="stat-label">Unread Messages</div>
-                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>2</div>
+                  <div className="stat-label">Total Consultations</div>
+                  <div className="stat-value" style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>{appointments.length}</div>
                 </div>
               </div>
             </div>
@@ -39,15 +75,15 @@ export default function DoctorDashboard() {
               <Users style={{ color: 'var(--color-primary)' }} /> Patient Roster
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[
-                { name: 'John Doe', status: 'High Adherence', lastSeen: '2 days ago' },
-                { name: 'Alice Smith', status: 'Needs Review', lastSeen: '1 week ago' },
-                { name: 'Bob Johnson', status: 'Stable', lastSeen: '3 days ago' },
-              ].map((patient, i) => (
+              {patients.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                  No active patients.
+                </div>
+              ) : patients.map((patient, i) => (
                 <div key={i} className="glass-panel" style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{patient.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Last Session: {patient.lastSeen}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Last Scheduled: {patient.lastSeen}</div>
                   </div>
                   <div>
                     <span style={{ 
@@ -73,9 +109,28 @@ export default function DoctorDashboard() {
             <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Calendar style={{ color: 'var(--color-primary)' }} /> Upcoming Consultations
             </h3>
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-              No appointments scheduled for today.
-            </div>
+            {upcomingAppts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                No appointments scheduled for today.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {upcomingAppts.map((appt) => (
+                  <div key={appt.id} className="glass-panel" style={{ padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: '600' }}>Patient {appt.user_id.substring(0, 4)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{appt.date} at {appt.time_slot}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                        {appt.session_type} Session
+                      </span>
+                      <button className="btn-submit" style={{ padding: '0.4rem 1rem', marginTop: 0, fontSize: '0.8rem' }}>Join</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
       case 'messages':

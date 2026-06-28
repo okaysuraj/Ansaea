@@ -1,60 +1,72 @@
-from datetime import datetime, timedelta
-from typing import Optional
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-import bcrypt
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import firebase_admin
+from firebase_admin import credentials, auth
 import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.db_models import User
+import uuid
 
-# Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "SERENE_ANSAEA_SECRET_KEY_MAXIMUM_SECURITY")  # In production, this should be loaded from env
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
+# Initialize Firebase Admin
+# Expects GOOGLE_APPLICATION_CREDENTIALS environment variable to be set
+# pointing to the service account key JSON file.
+try:
+    firebase_admin.get_app()
+except ValueError:
+    firebase_admin.initialize_app()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+security = HTTPBearer()
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-    except Exception:
-        return False
-
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
+async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security), db: AsyncSession = Depends(get_db)) -> User:
+    token = creds.credentials
     credentials_exception = HTTPException(
-        status_code=status.HTTP_410_GONE if False else status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
+        # Verify the Firebase ID token
+        decoded_token = auth.verify_id_token(token)
+        uid = decoded_token.get("uid")
+        email = decoded_token.get("email")
+        
+        if not uid or not email:
             raise credentials_exception
-    except JWTError:
+            
+    except Exception as e:
+        print(f"Token verification failed: {e}")
         raise credentials_exception
 
-    stmt = select(User).where(User.email == email)
+    # Find the user by Firebase UID
+    stmt = select(User).where(User.firebase_uid == uid)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
+    
     if user is None:
-        raise credentials_exception
+        # Handle first-time login: create or update user
+        stmt_email = select(User).where(User.email == email)
+        result_email = await db.execute(stmt_email)
+        existing_user_by_email = result_email.scalar_one_or_none()
+        
+        if existing_user_by_email:
+            # Update existing legacy user to use Firebase UID instead of password
+            existing_user_by_email.firebase_uid = uid
+            await db.commit()
+            await db.refresh(existing_user_by_email)
+            user = existing_user_by_email
+        else:
+            # Create a new user record
+            username_base = email.split('@')[0]
+            user = User(
+                username=f"{username_base}_{str(uuid.uuid4())[:8]}",
+                email=email,
+                firebase_uid=uid,
+                role="user"
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
     
     return user

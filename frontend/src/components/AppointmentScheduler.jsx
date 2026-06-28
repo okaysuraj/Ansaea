@@ -30,7 +30,7 @@ export default function AppointmentScheduler({ doctor, onClose, onSuccess }) {
       const response = await authenticatedFetch('/psychiatrists/book', {
         method: 'POST',
         body: JSON.stringify({
-          psychiatrist_id: doctor.id,
+          doctor_id: doctor.id,
           date: selectedDate,
           time_slot: selectedSlot,
           session_type: sessionType

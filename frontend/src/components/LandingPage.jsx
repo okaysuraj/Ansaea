@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import '../landing.css';
 
-export default function LandingPage({ AuthComponent, onNavigateToSignup }) {
-  const [showAuth, setShowAuth] = useState(false);
+export default function LandingPage({ 
+  AuthComponent, 
+  onNavigateToSignup, 
+  user, 
+  onNavigateToDashboard,
+  showAuthModal,
+  onOpenAuth,
+  onCloseAuth
+}) {
 
   // Micro-interactions and scroll reveal
   useEffect(() => {
@@ -41,14 +48,20 @@ export default function LandingPage({ AuthComponent, onNavigateToSignup }) {
             <a className="nav-link font-label-caps" href="#">FAQs</a>
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button 
-              className="nav-link font-label-caps" 
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-              onClick={() => setShowAuth(true)}
-            >
-              Log in
-            </button>
-            <button className="btn-solid" onClick={onNavigateToSignup}>Become a member</button>
+            {user ? (
+              <button className="btn-solid" onClick={onNavigateToDashboard}>Go to Dashboard</button>
+            ) : (
+              <>
+                <button 
+                  className="nav-link font-label-caps" 
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  onClick={onOpenAuth}
+                >
+                  Log in
+                </button>
+                <button className="btn-solid" onClick={onNavigateToSignup}>Become a member</button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -64,7 +77,11 @@ export default function LandingPage({ AuthComponent, onNavigateToSignup }) {
               100+ biomarkers. A plan built around you. Everything you need to act on it.
             </p>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <button className="btn-solid btn-solid-lg" onClick={onNavigateToSignup}>Become a member</button>
+              {user ? (
+                <button className="btn-solid btn-solid-lg" onClick={onNavigateToDashboard}>Go to Dashboard</button>
+              ) : (
+                <button className="btn-solid btn-solid-lg" onClick={onNavigateToSignup}>Become a member</button>
+              )}
               <button className="btn-outline">See what we test</button>
             </div>
           </div>
@@ -202,7 +219,11 @@ export default function LandingPage({ AuthComponent, onNavigateToSignup }) {
               ))}
             </div>
             
-            <button className="btn-solid btn-solid-lg" style={{ marginBottom: '1rem' }} onClick={onNavigateToSignup}>Become a member</button>
+            {user ? (
+              <button className="btn-solid btn-solid-lg" style={{ marginBottom: '1rem' }} onClick={onNavigateToDashboard}>Go to Dashboard</button>
+            ) : (
+              <button className="btn-solid btn-solid-lg" style={{ marginBottom: '1rem' }} onClick={onNavigateToSignup}>Become a member</button>
+            )}
             <p style={{ fontSize: '10px', color: 'var(--color-surface-variant)', opacity: 0.6 }}>Billed annually. Cancel anytime. Pricing may vary for NY/NJ members.</p>
           </div>
         </section>
@@ -334,11 +355,11 @@ export default function LandingPage({ AuthComponent, onNavigateToSignup }) {
       </footer>
 
       {/* Auth Modal Overlay */}
-      {showAuth && (
+      {showAuthModal && (
         <div className="landing-auth-modal-overlay">
           <div style={{ position: 'relative' }}>
             <button 
-              onClick={() => setShowAuth(false)}
+              onClick={onCloseAuth}
               style={{
                 position: 'absolute', top: '-1rem', right: '-1rem',
                 background: '#1f1f1f', color: '#fff', border: 'none',

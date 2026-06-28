@@ -4,15 +4,6 @@ from datetime import datetime
 import uuid
 
 # --- Authentication Models ---
-class UserRegister(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    role: str = "user"
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
 
 class UserOut(BaseModel):
     id: uuid.UUID
@@ -93,8 +84,9 @@ class HabitLogOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# --- Psychiatrist & Appointment Models ---
-class PsychiatristBase(BaseModel):
+# --- Doctor & Appointment Models ---
+class DoctorOut(BaseModel):
+    id: uuid.UUID
     name: str
     specialty: str
     bio: str
@@ -104,13 +96,10 @@ class PsychiatristBase(BaseModel):
     session_price: int
     availability_slots: List[str]
 
-class PsychiatristOut(PsychiatristBase):
-    id: uuid.UUID
-
     model_config = ConfigDict(from_attributes=True)
 
 class AppointmentCreate(BaseModel):
-    psychiatrist_id: uuid.UUID
+    doctor_id: uuid.UUID
     date: str  # YYYY-MM-DD
     time_slot: str  # e.g. "10:00 AM"
     session_type: str  # "chat", "call", "video"
@@ -118,7 +107,7 @@ class AppointmentCreate(BaseModel):
 class AppointmentOut(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    psychiatrist_id: uuid.UUID
+    doctor_id: uuid.UUID
     doctor_name: str
     doctor_specialty: str
     doctor_imageUrl: str

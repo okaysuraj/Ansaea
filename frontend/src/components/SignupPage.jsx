@@ -12,6 +12,7 @@ export default function SignupPage({ onNavigateToLogin }) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
   const [formLoading, setFormLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +22,9 @@ export default function SignupPage({ onNavigateToLogin }) {
     const success = await register(fullName, email, password, role);
     
     setFormLoading(false);
+    if (success) {
+      setVerificationSent(true);
+    }
   };
 
   return (
@@ -97,6 +101,20 @@ export default function SignupPage({ onNavigateToLogin }) {
               </div>
             )}
 
+            {verificationSent ? (
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-primary-landing)' }}>mark_email_read</span>
+                </div>
+                <h3 className="font-headline-lg" style={{ marginBottom: '1rem' }}>Check your email</h3>
+                <p style={{ color: 'var(--color-surface-variant)', marginBottom: '2rem' }}>
+                  We've sent a verification link to <strong>{email}</strong>. Please click the link to verify your account before logging in.
+                </p>
+                <button onClick={onNavigateToLogin} className="signup-btn">
+                  Go to Login
+                </button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* Role Toggle */}
@@ -204,6 +222,7 @@ export default function SignupPage({ onNavigateToLogin }) {
                 </button>
               </div>
             </form>
+            )}
             
             <div style={{ marginTop: '2rem', textAlign: 'center', borderTop: '1px solid var(--color-border-subtle)', paddingTop: '1.5rem' }}>
               <p style={{ color: 'var(--color-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>

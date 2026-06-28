@@ -12,14 +12,16 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    firebase_uid = Column(String, unique=True, index=True, nullable=False)
     role = Column(String, default="user")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     mood_logs = relationship("MoodLog", back_populates="user", cascade="all, delete-orphan")
     cbt_logs = relationship("CBTLog", back_populates="user", cascade="all, delete-orphan")
     habit_logs = relationship("HabitLog", back_populates="user", cascade="all, delete-orphan")
-    appointments = relationship("Appointment", back_populates="user", cascade="all, delete-orphan")
+    appointments = relationship("Appointment", back_populates="user", foreign_keys="[Appointment.user_id]", cascade="all, delete-orphan")
+    doctor_appointments = relationship("Appointment", back_populates="doctor", foreign_keys="[Appointment.doctor_id]", cascade="all, delete-orphan")
+    doctor_profile = relationship("DoctorProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class MoodLog(Base):
     __tablename__ = "mood_logs"
@@ -62,27 +64,27 @@ class HabitLog(Base):
 
     user = relationship("User", back_populates="habit_logs")
 
-class Psychiatrist(Base):
-    __tablename__ = "psychiatrists"
+class DoctorProfile(Base):
+    __tablename__ = "doctor_profiles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    name = Column(String, nullable=False)
-    specialty = Column(String, nullable=False)
-    bio = Column(Text, nullable=False)
-    rating = Column(Float, nullable=False)
-    experience_years = Column(Integer, nullable=False)
-    imageUrl = Column(String, nullable=False)
-    session_price = Column(Integer, nullable=False)
-    availability_slots = Column(JSON, nullable=False) # List[str]
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    specialty = Column(String, nullable=False, default="General Practitioner")
+    bio = Column(Text, nullable=False, default="Dedicated healthcare professional.")
+    rating = Column(Float, nullable=False, default=5.0)
+    experience_years = Column(Integer, nullable=False, default=1)
+    image_url = Column(String, nullable=False, default="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=300")
+    session_price = Column(Integer, nullable=False, default=100)
+    availability_slots = Column(JSON, nullable=False, default=list) # List[str]
 
-    appointments = relationship("Appointment", back_populates="doctor", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="doctor_profile")
 
 class Appointment(Base):
     __tablename__ = "appointments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    psychiatrist_id = Column(UUID(as_uuid=True), ForeignKey("psychiatrists.id"), nullable=False)
+    doctor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     doctor_name = Column(String, nullable=False)
     doctor_specialty = Column(String, nullable=False)
     doctor_imageUrl = Column(String, nullable=False)
@@ -92,8 +94,8 @@ class Appointment(Base):
     status = Column(String, nullable=False, default="upcoming") # upcoming, completed, cancelled
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="appointments")
-    doctor = relationship("Psychiatrist", back_populates="appointments")
+    user = relationship("User", back_populates="appointments", foreign_keys=[user_id])
+    doctor = relationship("User", back_populates="doctor_appointments", foreign_keys=[doctor_id])
     messages = relationship("Message", back_populates="appointment", cascade="all, delete-orphan")
 
 class Message(Base):
