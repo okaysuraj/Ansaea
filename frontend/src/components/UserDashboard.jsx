@@ -21,16 +21,30 @@ import CBTDiary from './CBTDiary';
 import PsychiatristDirectory from './PsychiatristDirectory';
 import ChatSession from './ChatSession';
 import CallSession from './CallSession';
+import VitalsTracker from './VitalsTracker';
+import MedicalRecords from './MedicalRecords';
+import SymptomChecker from './SymptomChecker';
 
 function DashboardView() {
   const [refreshStats, setRefreshStats] = useState(0);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
-      <div style={{ gridColumn: 'span 5' }}>
-        <MoodSelector onLogSuccess={() => setRefreshStats(prev => prev + 1)} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
+        <div style={{ gridColumn: 'span 5' }}>
+          <MoodSelector onLogSuccess={() => setRefreshStats(prev => prev + 1)} />
+        </div>
+        <div style={{ gridColumn: 'span 7' }}>
+          <Analytics key={refreshStats} />
+        </div>
       </div>
-      <div style={{ gridColumn: 'span 7' }}>
-        <Analytics key={refreshStats} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
+        <div style={{ gridColumn: 'span 6' }}>
+          <VitalsTracker />
+        </div>
+        <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <SymptomChecker />
+          <MedicalRecords />
+        </div>
       </div>
     </div>
   );

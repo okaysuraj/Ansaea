@@ -26,9 +26,12 @@ import CallSession from './components/CallSession';
 import LandingPage from './components/LandingPage';
 import SignupPage from './components/SignupPage';
 import DoctorDashboard from './components/DoctorDashboard';
-
-
 import UserDashboard from './components/UserDashboard';
+import AdminDashboard from './components/AdminDashboard';
+import LabDashboard from './components/LabDashboard';
+import PharmacyDashboard from './components/PharmacyDashboard';
+
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 function AuthenticationScreen({ onNavigateToSignup }) {
   const { login, error, setError } = useAuth();
@@ -37,6 +40,8 @@ function AuthenticationScreen({ onNavigateToSignup }) {
   const [password, setPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormLoading(true);
@@ -44,6 +49,7 @@ function AuthenticationScreen({ onNavigateToSignup }) {
     await login(email, password);
     
     setFormLoading(false);
+    navigate('/dashboard');
   };
 
   return (
@@ -124,22 +130,29 @@ function AuthenticationScreen({ onNavigateToSignup }) {
   );
 }
 
+function ProtectedRoute({ children, allowedRoles }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/" />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" />;
+  }
+  return children;
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
-  
-  // We manage routing manually for simplicity.
-  const [currentRoute, setCurrentRoute] = useState(user ? '/dashboard' : '/'); 
   const [showSignup, setShowSignup] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const navigate = useNavigate();
 
-  // Auto-redirect to dashboard when a user logs in via modals
   useEffect(() => {
     if (user && (showLoginModal || showSignup)) {
-      setCurrentRoute('/dashboard');
+      navigate('/dashboard');
       setShowLoginModal(false);
       setShowSignup(false);
     }
-  }, [user]);
+  }, [user, navigate, showLoginModal, showSignup]);
 
   if (loading) {
     return (
@@ -148,54 +161,66 @@ function AppContent() {
           <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '48px', width: 'auto' }} />
           <h1 className="auth-logo" style={{ margin: 0 }}>Ansaea</h1>
         </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading mental status records...</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading records...</div>
       </div>
     );
   }
 
-  // Dashboard routing
-  if (user && currentRoute === '/dashboard') {
-    const isDoctor = user.role === 'doctor';
-    return isDoctor ? <DoctorDashboard /> : <UserDashboard />;
-  }
-
-  // Signup Page routing
-  if (showSignup) {
-    return (
-      <SignupPage 
-        onNavigateToLogin={() => {
-          setShowSignup(false);
-          setShowLoginModal(true);
-        }} 
-      />
-    );
-  }
-
-  // Landing Page routing (Default)
   return (
-    <LandingPage 
-      user={user}
-      onNavigateToDashboard={() => setCurrentRoute('/dashboard')}
-      AuthComponent={
-        <AuthenticationScreen 
-          onNavigateToSignup={() => {
-            setShowLoginModal(false);
-            setShowSignup(true);
-          }} 
-        />
-      } 
-      onNavigateToSignup={() => setShowSignup(true)}
-      showAuthModal={showLoginModal}
-      onOpenAuth={() => setShowLoginModal(true)}
-      onCloseAuth={() => setShowLoginModal(false)}
-    />
+    <Routes>
+      <Route path="/" element={
+        user ? <Navigate to="/dashboard" /> : (
+          showSignup ? (
+            <SignupPage 
+              onNavigateToLogin={() => {
+                setShowSignup(false);
+                setShowLoginModal(true);
+              }} 
+            />
+          ) : (
+            <LandingPage 
+              user={user}
+              onNavigateToDashboard={() => navigate('/dashboard')}
+              AuthComponent={
+                <AuthenticationScreen 
+                  onNavigateToSignup={() => {
+                    setShowLoginModal(false);
+                    setShowSignup(true);
+                  }} 
+                />
+              } 
+              onNavigateToSignup={() => setShowSignup(true)}
+              showAuthModal={showLoginModal}
+              onOpenAuth={() => setShowLoginModal(true)}
+              onCloseAuth={() => setShowLoginModal(false)}
+            />
+          )
+        )
+      } />
+      
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          {(() => {
+            switch (user?.role) {
+              case 'doctor': return <DoctorDashboard />;
+              case 'admin': return <AdminDashboard />;
+              case 'lab': return <LabDashboard />;
+              case 'pharmacy': return <PharmacyDashboard />;
+              default: return <UserDashboard />;
+            }
+          })()}
+        </ProtectedRoute>
+      } />
+    </Routes>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </AuthProvider>
   );
 }

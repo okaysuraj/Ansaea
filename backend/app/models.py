@@ -5,11 +5,23 @@ import uuid
 
 # --- Authentication Models ---
 
+class OrganizationOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    type: str
+    address: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 class UserOut(BaseModel):
     id: uuid.UUID
     username: str
     email: EmailStr
-    role: str = "user"
+    role: str = "patient"
+    organization_id: Optional[uuid.UUID] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -130,4 +142,92 @@ class MessageOut(BaseModel):
     text: str
     timestamp: datetime
 
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Phase 2: Patient Models ---
+class VitalSignCreate(BaseModel):
+    blood_pressure: Optional[str] = None
+    heart_rate: Optional[int] = None
+    spo2: Optional[int] = None
+    temperature: Optional[float] = None
+    bmi: Optional[float] = None
+    blood_sugar: Optional[float] = None
+
+class VitalSignOut(VitalSignCreate):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    date: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class MedicalRecordCreate(BaseModel):
+    title: str
+    record_type: str
+    file_url: str
+
+class MedicalRecordOut(MedicalRecordCreate):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    date: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Phase 2: Doctor Models ---
+class ClinicalNoteCreate(BaseModel):
+    subjective: Optional[str] = None
+    objective: Optional[str] = None
+    assessment: Optional[str] = None
+    plan: Optional[str] = None
+    icd10_codes: Optional[List[str]] = None
+
+class ClinicalNoteOut(ClinicalNoteCreate):
+    id: uuid.UUID
+    appointment_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class MedicationItem(BaseModel):
+    name: str
+    dosage: str
+    frequency: str
+    duration: str
+
+class PrescriptionCreate(BaseModel):
+    medications: List[MedicationItem]
+    instructions: Optional[str] = None
+
+class PrescriptionOut(PrescriptionCreate):
+    id: uuid.UUID
+    appointment_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Phase 3: Pharmacy & Lab Models ---
+class OrderItem(BaseModel):
+    name: str
+    quantity: int
+    price: float
+
+class PharmacyOrderCreate(BaseModel):
+    pharmacy_org_id: uuid.UUID
+    prescription_id: Optional[uuid.UUID] = None
+    items: List[OrderItem]
+    total_amount: float
+
+class PharmacyOrderOut(PharmacyOrderCreate):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    status: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class LabTestRequestCreate(BaseModel):
+    lab_org_id: uuid.UUID
+    doctor_id: Optional[uuid.UUID] = None
+    test_names: List[str]
+
+class LabTestRequestOut(LabTestRequestCreate):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    status: str
+    report_url: Optional[str] = None
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)

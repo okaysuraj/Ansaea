@@ -33,4 +33,44 @@ class AITherapistService:
             ]
             return random.choice(responses)
 
+    async def analyze_symptoms(self, symptoms: str) -> dict:
+        if self.api_key:
+            # Placeholder for actual LLM call to triage
+            pass
+        
+        # Simulated intelligent triage
+        symptoms_lower = symptoms.lower()
+        if any(x in symptoms_lower for x in ["chest pain", "shortness of breath", "fainting", "severe bleeding", "stroke"]):
+            return {
+                "triage_level": "URGENT",
+                "recommendation": "Please go to the nearest emergency room or call emergency services immediately.",
+                "possible_conditions": ["Critical condition"]
+            }
+        elif any(x in symptoms_lower for x in ["fever", "cough", "headache", "nausea"]):
+            return {
+                "triage_level": "ROUTINE",
+                "recommendation": "Schedule a general consultation. Rest and hydrate.",
+                "possible_conditions": ["Viral Infection", "Common Cold"]
+            }
+        else:
+            return {
+                "triage_level": "NON-URGENT",
+                "recommendation": "Monitor symptoms. Book an online consultation if they persist.",
+                "possible_conditions": ["Undifferentiated symptoms"]
+            }
+
+    async def generate_clinical_note(self, transcript: str) -> dict:
+        if self.api_key:
+            # Placeholder for actual LLM call to generate SOAP
+            pass
+            
+        # Simulated note generation
+        return {
+            "subjective": "Patient reports experiencing symptoms as described in the transcript. Mentions feeling stressed and fatigued.",
+            "objective": "Patient appears alert. Vitals (if provided) are within normal ranges unless otherwise noted.",
+            "assessment": "Likely stress-related fatigue or mild viral symptoms.",
+            "plan": "1. Rest and hydration.\n2. Follow up in 1 week if symptoms persist.\n3. Recommend mindfulness exercises.",
+            "icd10_codes": ["R53.83 (Other fatigue)", "F43.9 (Reaction to severe stress)"]
+        }
+
 ai_therapist = AITherapistService()

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, MessageSquare, Calendar, LogOut, Activity, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Calendar, LogOut, Activity, UserCheck, Stethoscope } from 'lucide-react';
+import ClinicalNotes from './ClinicalNotes';
+import EPrescription from './EPrescription';
 
 export default function DoctorDashboard() {
   const { user, logout } = useAuth();
@@ -144,6 +146,17 @@ export default function DoctorDashboard() {
             </div>
           </div>
         );
+      case 'tools':
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
+            <div style={{ gridColumn: 'span 6' }}>
+              <ClinicalNotes />
+            </div>
+            <div style={{ gridColumn: 'span 6' }}>
+              <EPrescription />
+            </div>
+          </div>
+        );
       default:
         return <div>Select a view</div>;
     }
@@ -155,6 +168,7 @@ export default function DoctorDashboard() {
       case 'patients': return 'Patient Roster';
       case 'schedule': return 'Schedule';
       case 'messages': return 'Messages';
+      case 'tools': return 'Clinical Tools';
       default: return 'Ansaea Clinical';
     }
   };
@@ -203,6 +217,15 @@ export default function DoctorDashboard() {
               style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
             >
               <MessageSquare size={18} /> Messages
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => setCurrentView('tools')}
+              className={`nav-item ${currentView === 'tools' ? 'active' : ''}`}
+              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
+            >
+              <Stethoscope size={18} /> Clinical Tools
             </button>
           </li>
         </ul>

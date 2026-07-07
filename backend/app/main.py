@@ -8,7 +8,7 @@ from datetime import datetime
 from app.database import get_db, engine
 from app.db_models import Base, User
 from app.auth import get_current_user
-from app.routers import tracker, psychiatrist, chat, users
+from app.routers import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab
 
 app = FastAPI(title="Ansaea Mental Health Portal API", version="1.0.0")
 
@@ -26,6 +26,11 @@ app.include_router(tracker.router)
 app.include_router(psychiatrist.router)
 app.include_router(chat.router)
 app.include_router(users.router)
+app.include_router(ai_routes.router)
+app.include_router(patients.router)
+app.include_router(doctors.router)
+app.include_router(pharmacy.router)
+app.include_router(lab.router)
 
 
 

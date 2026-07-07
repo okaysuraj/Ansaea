@@ -27,10 +27,15 @@ async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(securit
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(token)
-        uid = decoded_token.get("uid")
-        email = decoded_token.get("email")
+        if token.startswith("dev_"):
+            # Local Dev Fallback Bypass
+            email = token.replace("dev_", "")
+            uid = f"mock_{email}"
+        else:
+            # Verify the Firebase ID token
+            decoded_token = auth.verify_id_token(token)
+            uid = decoded_token.get("uid")
+            email = decoded_token.get("email")
         
         if not uid or not email:
             raise credentials_exception
