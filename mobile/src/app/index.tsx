@@ -1,30 +1,49 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { Stethoscope } from 'lucide-react-native';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('patient');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async () => {
+  const handleSubmit = async () => {
     setLoading(true);
     setError('');
-    const res = await login(email, password);
-    if (!res.success) {
-      setError(res.error || 'Login failed');
-      setLoading(false);
+    
+    if (isLogin) {
+      const res = await login(email, password);
+      if (!res.success) {
+        setError(res.error || 'Login failed');
+      }
+    } else {
+      if (!username) {
+        setError("Username is required");
+        setLoading(false);
+        return;
+      }
+      const res = await register(username, email, password, role);
+      if (!res.success) {
+        setError(res.error || 'Registration failed');
+      } else {
+        Alert.alert("Verification Required", "A verification link has been sent to your email. Please verify your email before logging in.");
+        setIsLogin(true); // Switch to login view
+      }
     }
-    // if success, AuthContext handles navigation
+    setLoading(false);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Stethoscope size={64} color="#0EA5E9" />
+        <Image source={require('../../assets/images/logo.png')} style={{ width: 80, height: 80, resizeMode: 'contain', marginBottom: 12 }} />
         <Text style={styles.title}>Ansaea Enterprise</Text>
         <Text style={styles.subtitle}>Digital Health Ecosystem</Text>
       </View>
@@ -32,6 +51,35 @@ export default function LoginScreen() {
       <View style={styles.formContainer}>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         
+        {!isLogin && (
+          <>
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your username"
+              placeholderTextColor="#9ca3af"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+            
+            <Text style={styles.label}>Role</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {['patient', 'doctor'].map((r) => (
+                <TouchableOpacity 
+                  key={r} 
+                  onPress={() => setRole(r)}
+                  style={[styles.roleBtn, role === r && styles.roleBtnActive]}
+                >
+                  <Text style={[styles.roleBtnText, role === r && styles.roleBtnTextActive]}>
+                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
         <Text style={styles.label}>Email Address</Text>
         <TextInput
           style={styles.input}
@@ -55,24 +103,21 @@ export default function LoginScreen() {
 
         <TouchableOpacity 
           style={styles.button} 
-          onPress={handleLogin}
+          onPress={handleSubmit}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
           )}
         </TouchableOpacity>
         
-        <View style={styles.hintBox}>
-          <Text style={styles.hintText}>Login hints for roles:</Text>
-          <Text style={styles.hintText}>Doctor: doctor@ansaea.com</Text>
-          <Text style={styles.hintText}>Admin: admin@ansaea.com</Text>
-          <Text style={styles.hintText}>Lab: lab@ansaea.com</Text>
-          <Text style={styles.hintText}>Pharmacy: pharm@ansaea.com</Text>
-          <Text style={styles.hintText}>Patient: patient@ansaea.com</Text>
-        </View>
+        <TouchableOpacity style={{ marginTop: 24, alignItems: 'center' }} onPress={() => { setIsLogin(!isLogin); setError(''); }}>
+          <Text style={{ color: '#0EA5E9' }}>
+            {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -140,15 +185,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  hintBox: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+  roleBtn: {
+    flex: 1,
+    padding: 10,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center'
   },
-  hintText: {
-    color: '#38BDF8',
-    fontSize: 12,
-    marginBottom: 4,
+  roleBtnActive: {
+    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+    borderColor: '#0EA5E9'
+  },
+  roleBtnText: {
+    color: '#94A3B8'
+  },
+  roleBtnTextActive: {
+    color: '#0EA5E9',
+    fontWeight: 'bold'
   }
 });

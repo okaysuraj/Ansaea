@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, HeartPulse } from 'lucide-react';
+import { Send, ArrowLeft, HeartPulse, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { encryptMessage, decryptMessage } from '../utils/encryption';
 
 export default function ChatSession({ appointment, onBack }) {
   const { authenticatedFetch } = useAuth();
@@ -19,7 +20,12 @@ export default function ChatSession({ appointment, onBack }) {
       const response = await authenticatedFetch(`/chat/${appointment.id}/messages`);
       const data = await response.json();
       if (response.ok) {
-        setMessages(data);
+        // Decrypt historical messages
+        const decryptedMsgs = await Promise.all(data.map(async (msg) => ({
+          ...msg,
+          text: await decryptMessage(msg.text)
+        })));
+        setMessages(decryptedMsgs);
       }
     } catch (err) {
       console.log('Error fetching chat history:', err);
@@ -44,16 +50,18 @@ export default function ChatSession({ appointment, onBack }) {
       setError('');
     };
     
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'typing') {
         setIsTyping(true);
       } else {
         setIsTyping(false);
+        // Decrypt incoming live message
+        const decryptedData = { ...data, text: await decryptMessage(data.text) };
         setMessages((prev) => {
           // Avoid duplicates if message already exists
-          if (!prev.find(m => m.id === data.id)) {
-            return [...prev, data];
+          if (!prev.find(m => m.id === decryptedData.id)) {
+            return [...prev, decryptedData];
           }
           return prev;
         });
@@ -80,14 +88,16 @@ export default function ChatSession({ appointment, onBack }) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || !socket || socket.readyState !== WebSocket.OPEN) return;
 
     const userText = inputText;
     setInputText('');
     
-    socket.send(JSON.stringify({ text: userText }));
+    // Encrypt outgoing message
+    const encryptedText = await encryptMessage(userText);
+    socket.send(JSON.stringify({ text: encryptedText, original_for_ai: userText }));
   };
 
   return (
@@ -116,7 +126,11 @@ export default function ChatSession({ appointment, onBack }) {
           </span>
         </div>
 
-        <HeartPulse size={24} style={{ color: 'var(--color-secondary)', marginLeft: 'auto' }} />
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--color-success)', background: 'rgba(34, 197, 94, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '12px' }}>
+          <Lock size={12} />
+          E2E Encrypted
+        </div>
+        <HeartPulse size={24} style={{ color: 'var(--color-secondary)' }} />
       </div>
 
       {/* Messages Area */}

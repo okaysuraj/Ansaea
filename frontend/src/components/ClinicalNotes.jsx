@@ -12,9 +12,29 @@ export default function ClinicalNotes({ patientId, appointmentId }) {
   });
   const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
-    // Save logic
-    console.log('Saved note:', note);
+  React.useEffect(() => {
+    if (!appointmentId) return;
+    const fetchNote = async () => {
+      try {
+        const res = await authenticatedFetch(`/api/doctors/notes/${appointmentId}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.data) setNote(d.data);
+        }
+      } catch (e) { console.error(e); }
+    };
+    fetchNote();
+  }, [appointmentId, authenticatedFetch]);
+
+  const handleSave = async () => {
+    if (!appointmentId) return alert('No appointment selected');
+    try {
+      const res = await authenticatedFetch(`/api/doctors/notes/${appointmentId}`, {
+        method: 'POST',
+        body: JSON.stringify(note)
+      });
+      if (res.ok) alert('Note saved successfully');
+    } catch (e) { console.error(e); }
   };
 
   const generateAIAssistedNote = async () => {

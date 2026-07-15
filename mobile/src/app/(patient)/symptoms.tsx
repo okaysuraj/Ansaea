@@ -21,7 +21,7 @@ export default function SymptomChecker() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await authenticatedFetch('/ai/triage', {
+      const res = await authenticatedFetch('/api/ai/triage', {
         method: 'POST',
         body: JSON.stringify({ symptoms })
       });

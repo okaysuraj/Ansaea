@@ -13,6 +13,8 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     firebase_uid = Column(String, unique=True, index=True, nullable=False)
+    abha_number = Column(String, nullable=True, index=True)
+    wallet_balance = Column(Float, nullable=False, default=0.0)
     role = Column(String, default="patient") # patient, doctor, admin, lab, pharmacy, super_admin
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -93,6 +95,8 @@ class DoctorProfile(Base):
     image_url = Column(String, nullable=False, default="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=300")
     session_price = Column(Integer, nullable=False, default=100)
     availability_slots = Column(JSON, nullable=False, default=list) # List[str]
+    status = Column(String, default="pending") # pending, approved, rejected
+    license_number = Column(String, nullable=True)
 
     user = relationship("User", back_populates="doctor_profile")
 
@@ -185,6 +189,8 @@ class PharmacyOrder(Base):
     status = Column(String, default="pending") # pending, processing, shipped, delivered, cancelled
     items = Column(JSON, nullable=False)
     total_amount = Column(Float, nullable=False, default=0.0)
+    delivery_status = Column(String, default="not_started") # not_started, out_for_delivery, delivered
+    delivery_agent_info = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class LabTestRequest(Base):
@@ -196,4 +202,60 @@ class LabTestRequest(Base):
     test_names = Column(JSON, nullable=False) # List[str]
     status = Column(String, default="pending") # pending, sample_collected, processing, completed
     report_url = Column(String, nullable=True)
+    tat_hours_expected = Column(Integer, nullable=True)
+    tat_hours_actual = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class PaymentTransaction(Base):
+    __tablename__ = "payment_transactions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    transaction_type = Column(String, nullable=False) # deposit, payment, refund
+    status = Column(String, default="pending") # pending, success, failed
+    reference_id = Column(String, nullable=True) # Gateway reference
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class InsuranceDetail(Base):
+    __tablename__ = "insurance_details"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    provider_name = Column(String, nullable=False)
+    policy_number = Column(String, nullable=False)
+    coverage_amount = Column(Float, nullable=False)
+    valid_until = Column(DateTime, nullable=False)
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    action = Column(String, nullable=False)
+    actor_id = Column(String, nullable=False)
+    target_id = Column(String, nullable=True)
+    details = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class InventoryItem(Base):
+    __tablename__ = "inventory_items"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    pharmacy_org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    name = Column(String, nullable=False)
+    stock = Column(Integer, nullable=False, default=0)
+    price = Column(Float, nullable=False)
+    substitute_suggestions = Column(JSON, nullable=True) # List of alternative item IDs/names
+
+class WearableData(Base):
+    __tablename__ = "wearable_data"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    device_type = Column(String, nullable=False) # AppleHealth, Fitbit
+    data_type = Column(String, nullable=False) # steps, heart_rate, sleep
+    value = Column(String, nullable=False)
+    recorded_at = Column(DateTime, nullable=False)
+    synced_at = Column(DateTime, default=datetime.utcnow)
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    setting_key = Column(String, nullable=False, unique=True)
+    setting_value = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

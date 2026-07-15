@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
 
-from app.models import MoodLogCreate, MoodLogOut, CBTLogCreate, CBTLogOut, HabitLogCreate, HabitLogOut
-from app.db_models import MoodLog, CBTLog, HabitLog
+from app.models import MoodLogCreate, MoodLogOut, CBTLogCreate, CBTLogOut, HabitLogCreate, HabitLogOut, VitalSignCreate, VitalSignOut, MedicalRecordCreate, MedicalRecordOut
+from app.db_models import MoodLog, CBTLog, HabitLog, VitalSign, MedicalRecord
 from app.auth import get_current_user
 from app.database import get_db
 
@@ -212,3 +212,48 @@ async def get_habit_stats(current_user = Depends(get_current_user), db: AsyncSes
         "habit_completion_rates": completion_rates,
         "overall_completion_rate": overall_rate
     }
+
+# --- Vitals Endpoints ---
+
+@router.post("/vitals", response_model=Dict[str, Any])
+async def log_vitals(vital_in: VitalSignCreate, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    new_vital = VitalSign(
+        user_id=current_user.id,
+        blood_pressure=vital_in.blood_pressure,
+        heart_rate=vital_in.heart_rate,
+        spo2=vital_in.spo2,
+        temperature=vital_in.temperature,
+        bmi=vital_in.bmi,
+        blood_sugar=vital_in.blood_sugar
+    )
+    db.add(new_vital)
+    await db.commit()
+    await db.refresh(new_vital)
+    return {"status": "success", "message": "Vitals logged successfully"}
+
+@router.get("/vitals", response_model=List[VitalSignOut])
+async def get_vitals(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stmt = select(VitalSign).where(VitalSign.user_id == current_user.id).order_by(VitalSign.date.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# --- Medical Records Endpoints ---
+
+@router.post("/records", response_model=Dict[str, Any])
+async def upload_record(record_in: MedicalRecordCreate, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    new_record = MedicalRecord(
+        user_id=current_user.id,
+        title=record_in.title,
+        record_type=record_in.record_type,
+        file_url=record_in.file_url
+    )
+    db.add(new_record)
+    await db.commit()
+    await db.refresh(new_record)
+    return {"status": "success", "message": "Record uploaded successfully"}
+
+@router.get("/records", response_model=List[MedicalRecordOut])
+async def get_records(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stmt = select(MedicalRecord).where(MedicalRecord.user_id == current_user.id).order_by(MedicalRecord.date.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()

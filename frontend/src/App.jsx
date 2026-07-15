@@ -1,216 +1,163 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import {
-  LayoutDashboard,
-  Heart,
-  Wind,
-  BrainCircuit,
-  Calendar,
-  MessageSquare,
-  LogOut,
-  Phone,
-  Video,
-  UserCheck,
-  Activity
-} from 'lucide-react';
 
-// Components
-import MoodSelector from './components/MoodSelector';
-import Analytics from './components/Analytics';
-import SelfCareTracker from './components/SelfCareTracker';
-import BreathingExercise from './components/BreathingExercise';
-import CBTDiary from './components/CBTDiary';
-import PsychiatristDirectory from './components/PsychiatristDirectory';
-import ChatSession from './components/ChatSession';
-import CallSession from './components/CallSession';
-import LandingPage from './components/LandingPage';
-import SignupPage from './components/SignupPage';
-import DoctorDashboard from './components/DoctorDashboard';
-import UserDashboard from './components/UserDashboard';
-import AdminDashboard from './components/AdminDashboard';
-import LabDashboard from './components/LabDashboard';
-import PharmacyDashboard from './components/PharmacyDashboard';
+// Auth Pages (Phase 1)
+import SplashScreen from './pages/auth/SplashScreen';
+import AppIntroduction from './pages/auth/AppIntroduction';
+import LoginScreen from './pages/auth/LoginScreen';
+import RegisterScreen from './pages/auth/RegisterScreen';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import OtpVerification from './pages/auth/OtpVerification';
+import RoleSelection from './pages/auth/RoleSelection';
 
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+// Patient Pages (Phase 2 & 5)
+import PatientLayout from './pages/patient/PatientLayout';
+import PatientDashboard from './pages/patient/PatientDashboard';
+import FindDoctors from './pages/patient/FindDoctors';
+import MyAppointments from './pages/patient/MyAppointments';
+import PatientProfile from './pages/patient/PatientProfile';
+import BookingSuccess from './pages/patient/BookingSuccess';
+import MedicalRecords from './pages/patient/MedicalRecords';
+import HealthMetrics from './pages/patient/HealthMetrics';
+import MentalHealthTrackers from './pages/patient/MentalHealthTrackers';
 
-function AuthenticationScreen({ onNavigateToSignup }) {
-  const { login, error, setError } = useAuth();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [formLoading, setFormLoading] = useState(false);
+// Doctor Pages (Phase 3 & 4)
+import DoctorLayout from './pages/doctor/DoctorLayout';
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import DoctorProfile from './pages/doctor/DoctorProfile';
+import SlotManagement from './pages/doctor/SlotManagement';
+import PatientDirectory from './pages/doctor/PatientDirectory';
+import ConsultationSetup from './pages/doctor/ConsultationSetup';
+import ConsultationWorkspace from './pages/doctor/ConsultationWorkspace';
 
-  const navigate = useNavigate();
+// Shared Pages (Phase 4)
+import MessagesInbox from './pages/shared/MessagesInbox';
+import NotificationsCenter from './pages/shared/NotificationsCenter';
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormLoading(true);
-    
-    await login(email, password);
-    
-    setFormLoading(false);
-    navigate('/dashboard');
-  };
+// Doctor Pages (Phase 3)
+import DoctorLayout from './pages/doctor/DoctorLayout';
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import DoctorProfile from './pages/doctor/DoctorProfile';
+import SlotManagement from './pages/doctor/SlotManagement';
+import PatientDirectory from './pages/doctor/PatientDirectory';
+import ConsultationSetup from './pages/doctor/ConsultationSetup';
 
-  return (
-    <div className="auth-form-card">
-      <div className="auth-form-header">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
-          <h1 className="auth-form-logo" style={{ margin: 0 }}>Ansaea</h1>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <h2 className="auth-form-title">
-            Welcome back
-          </h2>
-          <p className="auth-form-subtitle">
-            Access your clinical dashboard.
-          </p>
-        </div>
-      </div>
+// Admin Pages (Phase 7)
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 
-      {error && (
-        <div style={{ backgroundColor: 'rgba(186, 26, 26, 0.1)', color: '#ba1a1a', padding: '1rem', borderRadius: '8px', fontSize: '14px', textAlign: 'center' }}>
-          {error}
-        </div>
-      )}
+// Lab Pages (Phase 6)
+import LabLayout from './pages/lab/LabLayout';
+import LabDashboard from './pages/lab/LabDashboard';
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-          <div className="auth-input-group">
-            <label className="auth-input-label" htmlFor="email">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="auth-input"
-              placeholder="name@example.com"
-              required
-            />
-          </div>
-
-          <div className="auth-input-group">
-            <div className="auth-input-label">
-              <label htmlFor="password">Password</label>
-              <a className="auth-input-link" href="#">Forgot password?</a>
-            </div>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="auth-input"
-              placeholder="••••••••••••"
-              required
-            />
-          </div>
-
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem' }}>
-          <button type="submit" disabled={formLoading} className="auth-submit-btn">
-            {formLoading ? (
-              <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>progress_activity</span>
-            ) : (
-              <span>Log in</span>
-            )}
-          </button>
-          
-          <div className="auth-footer-text">
-            <span>Don't have an account? </span>
-            <button type="button" onClick={onNavigateToSignup} className="auth-footer-link">
-              Become a member
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
-  );
-}
+// Pharmacy Pages (Phase 6)
+import PharmacyLayout from './pages/pharmacy/PharmacyLayout';
+import PharmacyDashboard from './pages/pharmacy/PharmacyDashboard';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/" />;
+  if (!user) return <Navigate to="/login" />;
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to={`/${user.role}/dashboard`} />;
   }
   return children;
 }
 
+function RoleRouter() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  
+  if (user.role === 'doctor') return <Navigate to="/doctor/dashboard" />;
+  if (user.role === 'admin') return <Navigate to="/admin/dashboard" />;
+  if (user.role === 'lab') return <Navigate to="/lab/dashboard" />;
+  if (user.role === 'pharmacy') return <Navigate to="/pharmacy/dashboard" />;
+  
+  return <Navigate to="/patient/dashboard" />;
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
-  const [showSignup, setShowSignup] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user && (showLoginModal || showSignup)) {
-      navigate('/dashboard');
-      setShowLoginModal(false);
-      setShowSignup(false);
-    }
-  }, [user, navigate, showLoginModal, showSignup]);
 
   if (loading) {
     return (
-      <div className="auth-wrapper" style={{ flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '48px', width: 'auto' }} />
-          <h1 className="auth-logo" style={{ margin: 0 }}>Ansaea</h1>
-        </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading records...</div>
+      <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', background: '#000', color: '#fff' }}>
+        <h2>Loading...</h2>
       </div>
     );
   }
 
   return (
     <Routes>
-      <Route path="/" element={
-        user ? <Navigate to="/dashboard" /> : (
-          showSignup ? (
-            <SignupPage 
-              onNavigateToLogin={() => {
-                setShowSignup(false);
-                setShowLoginModal(true);
-              }} 
-            />
-          ) : (
-            <LandingPage 
-              user={user}
-              onNavigateToDashboard={() => navigate('/dashboard')}
-              AuthComponent={
-                <AuthenticationScreen 
-                  onNavigateToSignup={() => {
-                    setShowLoginModal(false);
-                    setShowSignup(true);
-                  }} 
-                />
-              } 
-              onNavigateToSignup={() => setShowSignup(true)}
-              showAuthModal={showLoginModal}
-              onOpenAuth={() => setShowLoginModal(true)}
-              onCloseAuth={() => setShowLoginModal(false)}
-            />
-          )
-        )
-      } />
+      {/* Auth Flows */}
+      <Route path="/" element={<SplashScreen />} />
+      <Route path="/intro" element={<AppIntroduction />} />
+      <Route path="/login" element={user ? <RoleRouter /> : <LoginScreen />} />
+      <Route path="/register" element={user ? <RoleRouter /> : <RegisterScreen />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/otp-verification" element={<OtpVerification />} />
+      <Route path="/role-selection" element={user ? <RoleSelection /> : <Navigate to="/login" />} />
       
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          {(() => {
-            switch (user?.role) {
-              case 'doctor': return <DoctorDashboard />;
-              case 'admin': return <AdminDashboard />;
-              case 'lab': return <LabDashboard />;
-              case 'pharmacy': return <PharmacyDashboard />;
-              default: return <UserDashboard />;
-            }
-          })()}
-        </ProtectedRoute>
-      } />
+      {/* Role Director */}
+      <Route path="/dashboard" element={<RoleRouter />} />
+
+      {/* Patient Portal */}
+      <Route path="/patient" element={<ProtectedRoute allowedRoles={['patient', 'user']}><PatientLayout /></ProtectedRoute>}>
+        <Route path="dashboard" element={<PatientDashboard />} />
+        <Route path="find-doctors" element={<FindDoctors />} />
+        <Route path="appointments" element={<MyAppointments />} />
+        <Route path="profile" element={<PatientProfile />} />
+        <Route path="booking-success" element={<BookingSuccess />} />
+        <Route path="records" element={<MedicalRecords />} />
+        <Route path="health-metrics" element={<HealthMetrics />} />
+        <Route path="mental-health" element={<MentalHealthTrackers />} />
+        <Route path="messages" element={<MessagesInbox />} />
+        <Route path="notifications" element={<NotificationsCenter />} />
+      </Route>
+
+      {/* Doctor Portal */}
+      <Route path="/doctor" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorLayout /></ProtectedRoute>}>
+        <Route path="dashboard" element={<DoctorDashboard />} />
+        <Route path="schedule" element={<SlotManagement />} />
+        <Route path="patients" element={<PatientDirectory />} />
+        <Route path="consultation-setup" element={<ConsultationSetup />} />
+        <Route path="workspace" element={<ConsultationWorkspace />} />
+        <Route path="profile" element={<DoctorProfile />} />
+        <Route path="messages" element={<MessagesInbox />} />
+        <Route path="notifications" element={<NotificationsCenter />} />
+      </Route>
+
+      {/* Admin Portal */}
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="settings" element={<AdminSettings />} />
+        {/* Placeholders for others */}
+        <Route path="users" element={<AdminDashboard />} />
+        <Route path="billing" element={<AdminDashboard />} />
+      </Route>
+
+      {/* Lab Portal */}
+      <Route path="/lab" element={<ProtectedRoute allowedRoles={['lab']}><LabLayout /></ProtectedRoute>}>
+        <Route path="dashboard" element={<LabDashboard />} />
+        <Route path="tests" element={<LabDashboard />} />
+        <Route path="reports" element={<LabDashboard />} />
+        <Route path="quality" element={<LabDashboard />} />
+      </Route>
+
+      {/* Pharmacy Portal */}
+      <Route path="/pharmacy" element={<ProtectedRoute allowedRoles={['pharmacy']}><PharmacyLayout /></ProtectedRoute>}>
+        <Route path="dashboard" element={<PharmacyDashboard />} />
+        <Route path="orders" element={<PharmacyDashboard />} />
+        <Route path="inventory" element={<PharmacyDashboard />} />
+        <Route path="invoices" element={<PharmacyDashboard />} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

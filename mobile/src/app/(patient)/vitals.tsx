@@ -28,7 +28,7 @@ export default function VitalsTracker() {
         bmi: vitals.bmi ? parseFloat(vitals.bmi) : null,
       };
 
-      const res = await authenticatedFetch('/patients/vitals', {
+      const res = await authenticatedFetch('/api/tracker/vitals', {
         method: 'POST',
         body: JSON.stringify(payload)
       });

@@ -1,129 +1,66 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Activity, Heart, Brain, Calendar } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Activity, FileText, HeartPulse } from 'lucide-react-native';
-import { router } from 'expo-router';
 
 export default function PatientDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.username}>{user?.username}</Text>
-        </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <LogOut size={20} color="#EF4444" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <HeartPulse size={24} color="#0EA5E9" />
-            <Text style={styles.cardTitle}>Vitals Tracker</Text>
-          </View>
-          <Text style={styles.cardDesc}>Log your daily blood pressure, heart rate, and BMI.</Text>
-          <TouchableOpacity style={styles.btn} onPress={() => router.push('/(patient)/vitals')}>
-            <Text style={styles.btnText}>Log Vitals</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Hello, {user?.username || 'Patient'}</Text>
+          <Text style={styles.subtitle}>Let's check in on your health today.</Text>
         </View>
 
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Activity size={24} color="#10B981" />
-            <Text style={styles.cardTitle}>AI Symptom Checker</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Activity size={20} color="#0ea5e9" />
+            <Text style={styles.cardTitle}>Daily Vitals</Text>
           </View>
-          <Text style={styles.cardDesc}>Not feeling well? Let our AI triage your symptoms.</Text>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: '#10B981' }]} onPress={() => router.push('/(patient)/symptoms')}>
-            <Text style={styles.btnText}>Check Symptoms</Text>
-          </TouchableOpacity>
+          <Text style={styles.cardDesc}>Heart Rate: 72 BPM</Text>
+          <Text style={styles.cardDesc}>SpO2: 98%</Text>
+          <TouchableOpacity style={styles.button}><Text style={styles.buttonText}>Log Vitals</Text></TouchableOpacity>
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.card, { flex: 1, marginRight: 8 }]}>
+            <Heart size={20} color="#ef4444" style={{ marginBottom: 8 }} />
+            <Text style={styles.cardTitle}>Self-Care</Text>
+            <Text style={styles.cardDesc}>2 tasks pending</Text>
+          </View>
+          <View style={[styles.card, { flex: 1, marginLeft: 8 }]}>
+            <Brain size={20} color="#8b5cf6" style={{ marginBottom: 8 }} />
+            <Text style={styles.cardTitle}>Mood</Text>
+            <Text style={styles.cardDesc}>Log today's mood</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <FileText size={24} color="#8B5CF6" />
-            <Text style={styles.cardTitle}>Medical Records</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Calendar size={20} color="#10b981" />
+            <Text style={styles.cardTitle}>Upcoming Consultations</Text>
           </View>
-          <Text style={styles.cardDesc}>View your prescriptions and upload lab reports.</Text>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: '#8B5CF6' }]} onPress={() => router.push('/(patient)/records')}>
-            <Text style={styles.btnText}>View Records</Text>
-          </TouchableOpacity>
+          <Text style={styles.cardDesc}>No appointments scheduled today.</Text>
         </View>
 
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  header: {
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: '#1E293B',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
-  greeting: {
-    color: '#94A3B8',
-    fontSize: 14,
-  },
-  username: {
-    color: '#F8FAFC',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  logoutBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 8,
-  },
-  scrollContent: {
-    padding: 20,
-    gap: 16,
-  },
-  card: {
-    backgroundColor: '#1E293B',
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-  },
-  cardDesc: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  btn: {
-    backgroundColor: '#0EA5E9',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  btnText: {
-    color: '#fff',
-    fontWeight: '600',
-  }
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  scroll: { padding: 20 },
+  header: { marginBottom: 24 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#F8FAFC' },
+  subtitle: { fontSize: 16, color: '#94A3B8', marginTop: 4 },
+  card: { backgroundColor: '#1E293B', padding: 20, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  row: { flexDirection: 'row', marginBottom: 16 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#F8FAFC', marginLeft: 8 },
+  cardDesc: { fontSize: 14, color: '#94A3B8', marginTop: 4 },
+  button: { backgroundColor: 'rgba(14, 165, 233, 0.1)', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 12, borderWidth: 1, borderColor: '#0ea5e9' },
+  buttonText: { color: '#0ea5e9', fontWeight: '600' }
 });

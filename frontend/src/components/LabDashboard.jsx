@@ -1,20 +1,46 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FlaskConical, ClipboardList, Upload, FileText, CheckCircle } from 'lucide-react';
+import { FlaskConical, ClipboardList, Upload, FileText, CheckCircle, Clock } from 'lucide-react';
 
 export default function LabDashboard() {
   const { user, logout } = useAuth();
-  const [tests, setTests] = useState([
-    { id: 'LAB-5091', patient: 'Alice Brown', test: 'Complete Blood Count', status: 'pending', date: 'Today, 8:30 AM' },
-    { id: 'LAB-5092', patient: 'John Doe', test: 'Lipid Profile', status: 'sample_collected', date: 'Today, 9:00 AM' }
-  ]);
+  const [tests, setTests] = useState([]);
 
-  const handleCollect = (id) => {
+  const { authenticatedFetch } = useAuth();
+  
+  React.useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await authenticatedFetch('/lab/requests');
+        if (res.ok) {
+          const data = await res.json();
+          setTests(data.map(t => ({
+             id: t.id.substring(0, 8),
+             patient: t.patient_id,
+             test: t.test_names.join(', '),
+             status: t.status,
+             date: new Date(t.created_at).toLocaleDateString()
+          })));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchRequests();
+  }, [authenticatedFetch]);
+  
+  const handleCollect = async (id) => {
     setTests(tests.map(t => t.id === id ? { ...t, status: 'sample_collected' } : t));
+    try {
+      await authenticatedFetch(`/lab/requests/${id}/status?status=sample_collected`, { method: 'PATCH' });
+    } catch(e) {}
   };
 
-  const handleUpload = (id) => {
+  const handleUpload = async (id) => {
     setTests(tests.map(t => t.id === id ? { ...t, status: 'completed' } : t));
+    try {
+      await authenticatedFetch(`/lab/requests/${id}/status?status=completed`, { method: 'PATCH' });
+    } catch(e) {}
   };
 
   return (
@@ -79,15 +105,37 @@ export default function LabDashboard() {
           </table>
         </div>
 
-        <div className="card" style={{ gridColumn: 'span 4' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={18} /> Recent Uploads</h3>
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
-              <div>
-                <strong>MRI Scan</strong><br/>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Bob Williams</span>
+        <div className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={18} /> Turnaround Time (TAT)</h3>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  <strong>Average TAT</strong><br/>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Last 7 days</span>
+                </div>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>4.2 hrs</span>
               </div>
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-success)' }}>Delivered</span>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  <strong>SLA Breaches</strong><br/>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>TAT &gt; 24hrs</span>
+                </div>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-danger)' }}>2</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={18} /> Recent Uploads</h3>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  <strong>MRI Scan</strong><br/>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Bob Williams</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-success)' }}>Delivered</span>
+              </div>
             </div>
           </div>
         </div>

@@ -10,7 +10,10 @@ import {
   LogOut,
   Phone,
   Video,
-  UserCheck
+  UserCheck,
+  CreditCard,
+  Link2,
+  Watch
 } from 'lucide-react';
 
 import MoodSelector from './MoodSelector';
@@ -24,6 +27,117 @@ import CallSession from './CallSession';
 import VitalsTracker from './VitalsTracker';
 import MedicalRecords from './MedicalRecords';
 import SymptomChecker from './SymptomChecker';
+
+function ProfileBillingView() {
+  const { user, authenticatedFetch } = useAuth();
+  const [walletBalance, setWalletBalance] = useState(user.wallet_balance || 0);
+  const [abhaId, setAbhaId] = useState(user.abha_number || '');
+  const [topupAmount, setTopupAmount] = useState('');
+
+  const handleTopup = async () => {
+    try {
+      const res = await authenticatedFetch('/billing/wallet/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(topupAmount), payment_gateway: 'mock' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWalletBalance(data.new_balance);
+        setTopupAmount('');
+        alert('Wallet topped up successfully!');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLinkAbha = async () => {
+    try {
+      const res = await authenticatedFetch('/users/link-abha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ abha_number: abhaId })
+      });
+      if (res.ok) {
+        alert('ABHA ID linked successfully!');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const syncWearable = async (deviceType) => {
+    try {
+      const res = await authenticatedFetch('/users/sync-wearable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_type: deviceType,
+          data: { steps: Math.floor(Math.random()*10000), heart_rate: 70 + Math.floor(Math.random()*15) }
+        })
+      });
+      if (res.ok) {
+        alert(`${deviceType} synced successfully!`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
+      <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CreditCard size={18} style={{ color: 'var(--color-primary)' }} />
+            Wallet & Payments
+          </h3>
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--color-success)' }}>
+            ₹{walletBalance.toFixed(2)}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input type="number" className="form-input" placeholder="Amount (₹)" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} />
+            <button className="btn-submit" style={{ marginTop: 0 }} onClick={handleTopup}>Top Up (Mock)</button>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Link2 size={18} style={{ color: 'var(--color-primary)' }} />
+            National Health ID (ABHA)
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            Link your ABHA number for seamless health record sharing.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input type="text" className="form-input" placeholder="ABHA ID (e.g. 12-3456-7890-1234)" value={abhaId} onChange={(e) => setAbhaId(e.target.value)} />
+            <button className="btn-submit" style={{ marginTop: 0 }} onClick={handleLinkAbha}>Link</button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Watch size={18} style={{ color: 'var(--color-info)' }} />
+            Wearables Integration
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <button className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => syncWearable('AppleHealth')}>
+              <span style={{ fontWeight: '600' }}>Apple Health</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>Sync Now</span>
+            </button>
+            <button className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => syncWearable('Fitbit')}>
+              <span style={{ fontWeight: '600' }}>Fitbit Data</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>Sync Now</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DashboardView() {
   const [refreshStats, setRefreshStats] = useState(0);
@@ -319,7 +433,7 @@ function MessagesView() {
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
-  const [currentView, setCurrentView] = useState('dashboard'); // dashboard, selfcare, mindtools, appointments, messages
+  const [currentView, setCurrentView] = useState('dashboard'); // dashboard, selfcare, mindtools, appointments, messages, profile
 
   const renderView = () => {
     switch (currentView) {
@@ -333,6 +447,8 @@ export default function UserDashboard() {
         return <AppointmentsView />;
       case 'messages':
         return <MessagesView />;
+      case 'profile':
+        return <ProfileBillingView />;
       default:
         return <DashboardView />;
     }
@@ -345,6 +461,7 @@ export default function UserDashboard() {
       case 'mindtools': return 'Cognitive Resiliency Kits';
       case 'appointments': return 'Psychiatrist Directory';
       case 'messages': return 'Messages Vault';
+      case 'profile': return 'Profile, Wallet & Wearables';
       default: return 'Ansaea Control';
     }
   };
@@ -354,7 +471,7 @@ export default function UserDashboard() {
       {/* Sidebar navigation */}
       <nav className="sidebar">
         <div className="sidebar-logo">
-          <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
+          <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
           <span>Ansaea Mind</span>
         </div>
 
@@ -402,6 +519,15 @@ export default function UserDashboard() {
               style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
             >
               <MessageSquare size={18} /> Messages
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => setCurrentView('profile')}
+              className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
+              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
+            >
+              <UserCheck size={18} /> Profile & Wallet
             </button>
           </li>
         </ul>

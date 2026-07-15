@@ -44,5 +44,50 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "username": current_user.username,
         "email": current_user.email,
-        "role": current_user.role
+        "role": current_user.role,
+        "abha_number": current_user.abha_number,
+        "wallet_balance": current_user.wallet_balance
     }
+
+class LinkABHARequest(BaseModel):
+    abha_number: str
+
+@router.post("/link-abha")
+async def link_abha(
+    data: LinkABHARequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Mocks linking an ABHA ID (India's National Health ID)
+    """
+    current_user.abha_number = data.abha_number
+    await db.commit()
+    return {"message": "ABHA linked successfully", "abha_number": current_user.abha_number}
+
+class WearableSyncRequest(BaseModel):
+    device_type: str # AppleHealth, Fitbit
+    data: dict # e.g. {"steps": 5000, "heart_rate": 72}
+
+@router.post("/sync-wearable")
+async def sync_wearable(
+    data: WearableSyncRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    from app.db_models import WearableData
+    from datetime import datetime
+    
+    # Store mocked wearable data
+    for key, value in data.data.items():
+        w_data = WearableData(
+            user_id=current_user.id,
+            device_type=data.device_type,
+            data_type=key,
+            value=str(value),
+            recorded_at=datetime.utcnow()
+        )
+        db.add(w_data)
+        
+    await db.commit()
+    return {"message": "Wearable data synced successfully"}

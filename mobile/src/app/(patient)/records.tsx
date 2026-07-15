@@ -3,11 +3,26 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { ArrowLeft, FileText, Upload } from 'lucide-react-native';
 import { router } from 'expo-router';
 
+import { useAuth } from '../../context/AuthContext';
+
 export default function MedicalRecords() {
-  const [records] = useState([
-    { id: '1', title: 'Blood Test Results', date: 'Oct 12, 2023', type: 'Lab Report' },
-    { id: '2', title: 'Chest X-Ray', date: 'Sep 05, 2023', type: 'Imaging' },
-  ]);
+  const { authenticatedFetch } = useAuth();
+  const [records, setRecords] = React.useState([]);
+
+  React.useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const res = await authenticatedFetch('/api/tracker/records');
+        if (res.ok) {
+          const data = await res.json();
+          setRecords(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchRecords();
+  }, [authenticatedFetch]);
 
   return (
     <View style={styles.container}>

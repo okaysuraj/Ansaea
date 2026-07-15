@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, MessageSquare, Calendar, LogOut, Activity, UserCheck, Stethoscope } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Calendar, LogOut, Activity, UserCheck, Stethoscope, Briefcase } from 'lucide-react';
 import ClinicalNotes from './ClinicalNotes';
 import EPrescription from './EPrescription';
 
@@ -41,6 +41,46 @@ export default function DoctorDashboard() {
     };
     fetchAppts();
   }, []);
+
+  const [earnings, setEarnings] = useState({ total_earnings: 0, recent_transactions: [] });
+  const [slotDate, setSlotDate] = useState('');
+  const [slotTime, setSlotTime] = useState('');
+  const [autoBuffer, setAutoBuffer] = useState(15);
+  
+  const fetchEarnings = async () => {
+    try {
+      const response = await authenticatedFetch('/doctors/earnings');
+      if (response.ok) {
+        const data = await response.json();
+        setEarnings(data);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === 'management') fetchEarnings();
+  }, [currentView]);
+
+  const handleUpdateSlots = async () => {
+    try {
+      const response = await authenticatedFetch('/doctors/slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: slotDate,
+          slots: [slotTime],
+          auto_buffer_mins: autoBuffer
+        })
+      });
+      if (response.ok) {
+        alert('Slots updated successfully!');
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const upcomingAppts = appointments.filter(a => a.status === 'upcoming');
 
@@ -157,6 +197,51 @@ export default function DoctorDashboard() {
             </div>
           </div>
         );
+      case 'management':
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '2rem' }}>
+            <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="glass-panel" style={{ padding: '2rem' }}>
+                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Briefcase size={18} style={{ color: 'var(--color-primary)' }} /> Earnings Overview
+                </h3>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--color-success)', marginBottom: '1rem' }}>
+                  ₹{earnings.total_earnings.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Recent Payouts:</div>
+                {earnings.recent_transactions.map((tx, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    <span>{new Date(tx.date).toLocaleDateString()}</span>
+                    <span style={{ color: 'var(--color-success)' }}>+₹{tx.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="glass-panel" style={{ padding: '2rem' }}>
+                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={18} style={{ color: 'var(--color-info)' }} /> Advanced Slot Management
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Date</label>
+                    <input type="date" className="form-input" value={slotDate} onChange={e => setSlotDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Time Slot (e.g. 10:00 AM)</label>
+                    <input type="text" className="form-input" value={slotTime} onChange={e => setSlotTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Auto-Buffer Time (Mins)</label>
+                    <input type="number" className="form-input" value={autoBuffer} onChange={e => setAutoBuffer(parseInt(e.target.value))} />
+                  </div>
+                  <button className="btn-submit" onClick={handleUpdateSlots}>Save Schedule</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       default:
         return <div>Select a view</div>;
     }
@@ -169,6 +254,7 @@ export default function DoctorDashboard() {
       case 'schedule': return 'Schedule';
       case 'messages': return 'Messages';
       case 'tools': return 'Clinical Tools';
+      case 'management': return 'Management & Earnings';
       default: return 'Ansaea Clinical';
     }
   };
@@ -178,7 +264,7 @@ export default function DoctorDashboard() {
       {/* Sidebar navigation */}
       <nav className="sidebar">
         <div className="sidebar-logo">
-          <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
+          <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
           <span>Ansaea Clinical</span>
         </div>
 
@@ -226,6 +312,15 @@ export default function DoctorDashboard() {
               style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
             >
               <Stethoscope size={18} /> Clinical Tools
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => setCurrentView('management')}
+              className={`nav-item ${currentView === 'management' ? 'active' : ''}`}
+              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
+            >
+              <Briefcase size={18} /> Management
             </button>
           </li>
         </ul>

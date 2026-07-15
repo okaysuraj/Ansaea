@@ -1,21 +1,82 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, Users, Activity, CheckCircle, XCircle } from 'lucide-react';
+import { ShieldAlert, Users, Activity, CheckCircle, XCircle, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   
-  const [approvals, setApprovals] = useState([
-    { id: 'DOC-901', name: 'Dr. Sarah Connor', specialty: 'Cardiology', license: 'MED192837', status: 'pending' },
-    { id: 'DOC-902', name: 'Dr. Kyle Reese', specialty: 'Neurology', license: 'MED918273', status: 'pending' }
-  ]);
+  const [approvals, setApprovals] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [hipaaEnabled, setHipaaEnabled] = useState(true);
+  const [gdprEnabled, setGdprEnabled] = useState(true);
+  const [stats, setStats] = useState({ uptime: "99.99%", active_users: 0 });
 
-  const handleApprove = (id) => {
+  const { authenticatedFetch } = useAuth();
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [appRes, logRes, statRes, setRes] = await Promise.all([
+          authenticatedFetch('/admin/approvals'),
+          authenticatedFetch('/admin/audit-logs'),
+          authenticatedFetch('/admin/system-health'),
+          authenticatedFetch('/admin/settings')
+        ]);
+        
+        if (appRes.ok) setApprovals(await appRes.json());
+        if (logRes.ok) setAuditLogs(await logRes.json());
+        if (statRes.ok) setStats(await statRes.json());
+        if (setRes.ok) {
+          const settings = await setRes.json();
+          setHipaaEnabled(settings.hipaa_mode);
+          setGdprEnabled(settings.gdpr_mode);
+        }
+      } catch (e) {
+        console.error("Admin fetch error", e);
+      }
+    };
+    fetchData();
+  }, [authenticatedFetch]);
+
+  const handleApprove = async (id) => {
     setApprovals(approvals.map(a => a.id === id ? { ...a, status: 'approved' } : a));
+    try {
+      await authenticatedFetch(`/admin/approvals/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'approved' })
+      });
+      // Refresh audit logs
+      const logRes = await authenticatedFetch('/admin/audit-logs');
+      if (logRes.ok) setAuditLogs(await logRes.json());
+    } catch(e) {}
   };
 
-  const handleReject = (id) => {
+  const handleReject = async (id) => {
     setApprovals(approvals.map(a => a.id === id ? { ...a, status: 'rejected' } : a));
+    try {
+      await authenticatedFetch(`/admin/approvals/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'rejected' })
+      });
+      const logRes = await authenticatedFetch('/admin/audit-logs');
+      if (logRes.ok) setAuditLogs(await logRes.json());
+    } catch(e) {}
+  };
+
+  const toggleHipaa = async () => {
+    const newVal = !hipaaEnabled;
+    setHipaaEnabled(newVal);
+    await authenticatedFetch('/admin/settings/hipaa_mode', { method: 'PATCH', body: JSON.stringify({ setting_value: newVal }) });
+    const logRes = await authenticatedFetch('/admin/audit-logs');
+    if (logRes.ok) setAuditLogs(await logRes.json());
+  };
+
+  const toggleGdpr = async () => {
+    const newVal = !gdprEnabled;
+    setGdprEnabled(newVal);
+    await authenticatedFetch('/admin/settings/gdpr_mode', { method: 'PATCH', body: JSON.stringify({ setting_value: newVal }) });
+    const logRes = await authenticatedFetch('/admin/audit-logs');
+    if (logRes.ok) setAuditLogs(await logRes.json());
   };
 
   return (
@@ -69,18 +130,68 @@ export default function AdminDashboard() {
           </table>
         </div>
         
-        <div className="card" style={{ gridColumn: 'span 4' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={18} /> System Health</h3>
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
-              <span>API Uptime</span>
-              <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>99.99%</span>
-            </div>
-            <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
-              <span>Active Users Today</span>
-              <span style={{ fontWeight: 'bold' }}>1,245</span>
+        <div className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={18} /> System Health</h3>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                <span>API Uptime</span>
+                <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{stats.uptime}</span>
+              </div>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Active Users</span>
+                <span style={{ fontWeight: 'bold' }}>{stats.active_users}</span>
+              </div>
             </div>
           </div>
+          
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShieldAlert size={18} /> Compliance & Privacy</h3>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>HIPAA Mode</strong><br/>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Strict audit & anonymization</span>
+                </div>
+                <button onClick={toggleHipaa} style={{ background: 'none', border: 'none', color: hipaaEnabled ? 'var(--color-success)' : 'var(--text-muted)', cursor: 'pointer' }}>
+                  {hipaaEnabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                </button>
+              </div>
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--surface-color)', borderRadius: '4px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>GDPR Compliance</strong><br/>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Data residency & right to forget</span>
+                </div>
+                <button onClick={toggleGdpr} style={{ background: 'none', border: 'none', color: gdprEnabled ? 'var(--color-success)' : 'var(--text-muted)', cursor: 'pointer' }}>
+                  {gdprEnabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{ gridColumn: 'span 12' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={18} /> Audit Logs</h3>
+          <table style={{ width: '100%', textAlign: 'left', marginTop: '1rem', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                <th style={{ padding: '0.5rem' }}>Log ID</th>
+                <th>Action</th>
+                <th>Actor</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditLogs.map(log => (
+                <tr key={log.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1rem 0.5rem', fontFamily: 'monospace' }}>{log.id}</td>
+                  <td>{log.action}</td>
+                  <td>{log.actor}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{log.timestamp}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>

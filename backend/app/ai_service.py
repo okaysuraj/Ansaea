@@ -66,11 +66,47 @@ class AITherapistService:
             
         # Simulated note generation
         return {
-            "subjective": "Patient reports experiencing symptoms as described in the transcript. Mentions feeling stressed and fatigued.",
-            "objective": "Patient appears alert. Vitals (if provided) are within normal ranges unless otherwise noted.",
-            "assessment": "Likely stress-related fatigue or mild viral symptoms.",
-            "plan": "1. Rest and hydration.\n2. Follow up in 1 week if symptoms persist.\n3. Recommend mindfulness exercises.",
-            "icd10_codes": ["R53.83 (Other fatigue)", "F43.9 (Reaction to severe stress)"]
+            "subjective": f"Patient reports experiencing symptoms as described in the transcript: '{transcript[:50]}...'",
+            "objective": "Patient appears alert. Vitals are within normal ranges.",
+            "assessment": "Likely stress-related fatigue or mild symptoms.",
+            "plan": "1. Rest and hydration.\n2. Follow up in 1 week if symptoms persist.",
+            "icd10_codes": ["R53.83", "F43.9"]
+        }
+
+    async def calculate_health_risk_score(self, vitals: list, habits: list) -> dict:
+        # Mock calculation based on provided data
+        score = 85
+        risk_level = "Low"
+        recommendations = ["Maintain current healthy habits"]
+        
+        if vitals and len(vitals) > 0:
+            latest_vitals = vitals[-1]
+            if latest_vitals.get("blood_pressure") == "high" or latest_vitals.get("bmi", 20) > 30:
+                score -= 20
+                risk_level = "Moderate"
+                recommendations.append("Monitor blood pressure and consider a balanced diet.")
+                
+        return {
+            "score": score,
+            "risk_level": risk_level,
+            "recommendations": recommendations,
+            "disease_progression_warning": "No immediate risks detected."
+        }
+
+    async def extract_text_from_image(self, file_path_or_url: str) -> dict:
+        if self.api_key:
+            # Call to Gemini Vision model for OCR
+            pass
+            
+        # Mock OCR extraction
+        return {
+            "extracted_text": "MOCK LAB REPORT\nPatient: John Doe\nTest: Complete Blood Count\nResult: Normal",
+            "confidence": 0.95,
+            "structured_data": {
+                "patient_name": "John Doe",
+                "test_name": "Complete Blood Count",
+                "result_status": "Normal"
+            }
         }
 
 ai_therapist = AITherapistService()

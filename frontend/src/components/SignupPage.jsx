@@ -35,7 +35,7 @@ export default function SignupPage({ onNavigateToLogin }) {
         <div className="signup-sidebar">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '40px', width: 'auto' }} />
+              <img src="/logo.png" alt="Ansaea Logo" style={{ height: '40px', width: 'auto' }} />
               <h1 className="auth-form-logo" style={{ textAlign: 'left', margin: 0 }}>Ansaea</h1>
             </div>
             <p className="font-headline-lg" style={{ color: 'var(--color-surface-variant)', fontWeight: 300, maxWidth: '28rem', lineHeight: 1.2 }}>
@@ -88,7 +88,7 @@ export default function SignupPage({ onNavigateToLogin }) {
         <div className="signup-form-wrapper">
           {/* Mobile Logo */}
           <div style={{ textAlign: 'center', marginBottom: '3rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }} className="signup-mobile-logo">
-            <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
+            <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
             <h1 className="auth-form-logo" style={{ margin: 0 }}>Ansaea</h1>
           </div>
           

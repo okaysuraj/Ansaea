@@ -7,7 +7,7 @@ from app.auth import get_current_user
 from app.db_models import User, LabTestRequest
 from app.models import LabTestRequestOut
 
-router = APIRouter(prefix="/lab", tags=["Lab"])
+router = APIRouter(prefix="/api/lab", tags=["Lab"])
 
 @router.get("/requests", response_model=List[LabTestRequestOut])
 async def get_test_requests(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -31,5 +31,12 @@ async def update_request_status(request_id: str, status: str, current_user: User
         raise HTTPException(status_code=404, detail="Test request not found")
         
     test_req.status = status
+    if status == "completed":
+        from datetime import datetime
+        import math
+        # Calculate actual TAT in hours
+        delta = datetime.utcnow() - test_req.created_at
+        test_req.tat_hours_actual = math.ceil(delta.total_seconds() / 3600)
+    
     await db.commit()
     return {"status": "success", "message": f"Test request status updated to {status}"}

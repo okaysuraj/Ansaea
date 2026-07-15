@@ -1,10 +1,31 @@
 import React, { useState } from 'react';
 import { Pill, Plus, Trash2, Send } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function EPrescription({ patientId, appointmentId }) {
+  const { authenticatedFetch } = useAuth();
   const [medications, setMedications] = useState([
     { id: 1, name: '', dosage: '', frequency: '', duration: '' }
   ]);
+  const [instructions, setInstructions] = useState('');
+
+  React.useEffect(() => {
+    if (!appointmentId) return;
+    const fetchPresc = async () => {
+      try {
+        const res = await authenticatedFetch(`/api/doctors/prescriptions/${appointmentId}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.data?.medications && d.data.medications.length > 0) {
+            setMedications(d.data.medications.map((m, i) => ({ id: i, ...m })));
+            setInstructions(d.data.instructions || '');
+          }
+        }
+      } catch (e) {}
+    };
+    fetchPresc();
+  }, [appointmentId, authenticatedFetch]);
 
   const handleAdd = () => {
     setMedications([...medications, { id: Date.now(), name: '', dosage: '', frequency: '', duration: '' }]);
@@ -17,6 +38,17 @@ export default function EPrescription({ patientId, appointmentId }) {
 
   const handleChange = (id, field, value) => {
     setMedications(medications.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  const handleSave = async () => {
+    if (!appointmentId) return alert('No appointment selected');
+    try {
+      const res = await authenticatedFetch(`/api/doctors/prescriptions/${appointmentId}?patient_id=${patientId || '00000000-0000-0000-0000-000000000000'}`, {
+        method: 'POST',
+        body: JSON.stringify({ medications, instructions })
+      });
+      if (res.ok) alert('Prescription sent successfully');
+    } catch (e) { console.error(e); }
   };
 
   return (
@@ -79,10 +111,12 @@ export default function EPrescription({ patientId, appointmentId }) {
             className="auth-input" 
             style={{ width: '100%', minHeight: '60px', resize: 'vertical' }}
             placeholder="Take after meals..."
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
           />
         </div>
 
-        <button className="auth-submit-btn" style={{ alignSelf: 'flex-end', width: 'auto', padding: '0.5rem 1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button onClick={handleSave} className="auth-submit-btn" style={{ alignSelf: 'flex-end', width: 'auto', padding: '0.5rem 1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Send size={16} /> Send to Patient
         </button>
       </div>

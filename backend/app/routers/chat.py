@@ -108,7 +108,11 @@ async def send_message(appointment_id: str, msg_in: MessageCreate, current_user 
     doctor_name = appt.doctor_name or "Doctor"
     doctor_specialty = appt.doctor_specialty or "Psychiatrist"
     
-    doctor_text = await ai_therapist.generate_response(msg_in.text, doctor_name, doctor_specialty)
+    original_for_ai = msg_in.text
+    if hasattr(msg_in, 'original_for_ai') and msg_in.original_for_ai:
+        original_for_ai = msg_in.original_for_ai
+
+    doctor_text = await ai_therapist.generate_response(original_for_ai, doctor_name, doctor_specialty)
         
     doctor_msg = Message(
         appointment_id=appt_uuid,
@@ -140,6 +144,7 @@ async def websocket_endpoint(websocket: WebSocket, appointment_id: str):
             data = await websocket.receive_text()
             msg_data = json.loads(data)
             text = msg_data.get("text", "")
+            original_for_ai = msg_data.get("original_for_ai", text)
             
             async with AsyncSessionLocal() as db:
                 user_msg = Message(
@@ -172,7 +177,7 @@ async def websocket_endpoint(websocket: WebSocket, appointment_id: str):
                 # Signal frontend that AI is typing
                 await manager.broadcast_to_room({"type": "typing", "sender": "doctor"}, appointment_id)
                     
-                ai_text = await ai_therapist.generate_response(text, doctor_name, doctor_specialty)
+                ai_text = await ai_therapist.generate_response(original_for_ai, doctor_name, doctor_specialty)
                 
                 ai_msg = Message(
                     appointment_id=appt_uuid,

@@ -3,11 +3,26 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { ArrowLeft, Users } from 'lucide-react-native';
 import { router } from 'expo-router';
 
+import { useAuth } from '../../context/AuthContext';
+
 export default function PatientRoster() {
-  const patients = [
-    { id: '1', name: 'John Doe', status: 'Stable', lastSeen: 'Today, 9:00 AM' },
-    { id: '2', name: 'Jane Smith', status: 'Needs Review', lastSeen: 'Yesterday' }
-  ];
+  const { authenticatedFetch } = useAuth();
+  const [patients, setPatients] = React.useState([]);
+
+  React.useEffect(() => {
+    const fetchRoster = async () => {
+      try {
+        const res = await authenticatedFetch('/api/doctors/roster');
+        if (res.ok) {
+          const data = await res.json();
+          setPatients(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchRoster();
+  }, [authenticatedFetch]);
 
   return (
     <View style={styles.container}>

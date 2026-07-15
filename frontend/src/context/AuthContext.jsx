@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         // Only set user if email is verified
         if (firebaseUser.emailVerified) {
-          const idToken = await firebaseUser.getIdToken();
+          const idToken = await firebaseUser.getIdToken(true); // force refresh
           
           try {
             // Fetch real role and username from the database
@@ -122,6 +122,8 @@ export const AuthProvider = ({ children }) => {
       headers['Authorization'] = `Bearer ${idToken}`;
     } else if (token) {
        headers['Authorization'] = `Bearer ${token}`;
+    } else {
+       throw new Error('No valid authentication token found. Please login.');
     }
     
     const response = await fetch(`${API_URL}${url}`, {

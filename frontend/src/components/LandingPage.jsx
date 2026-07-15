@@ -40,7 +40,7 @@ export default function LandingPage({
       <header className="landing-header">
         <div className="max-w-container-max header-container">
           <a className="header-logo" href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} /> Ansaea
+            <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} /> Ansaea
           </a>
           <nav className="header-nav">
             <a className="nav-link active font-label-caps" href="#">Biomarkers</a>
@@ -314,7 +314,7 @@ export default function LandingPage({
         <div className="footer-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <a className="header-logo" href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-              <img src="/favicon.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} /> Ansaea
+              <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} /> Ansaea
             </a>
             <p className="text-on-surface-variant" style={{ opacity: 0.7 }}>Precision health for human longevity.</p>
           </div>

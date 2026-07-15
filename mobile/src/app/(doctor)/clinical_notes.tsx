@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { FileSignature, ArrowLeft, Bot, Save } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 export default function ClinicalNotes() {
   const { authenticatedFetch } = useAuth();
+  const { appointmentId } = useLocalSearchParams();
   const [note, setNote] = useState({
     subjective: '',
     objective: '',
@@ -15,10 +16,24 @@ export default function ClinicalNotes() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  React.useEffect(() => {
+    if (!appointmentId) return;
+    const fetchNote = async () => {
+      try {
+        const res = await authenticatedFetch(`/api/doctors/notes/${appointmentId}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.data) setNote(d.data);
+        }
+      } catch (e) { console.error(e); }
+    };
+    fetchNote();
+  }, [appointmentId, authenticatedFetch]);
+
   const generateAIAssistedNote = async () => {
     setLoading(true);
     try {
-      const res = await authenticatedFetch('/ai/generate-note', {
+      const res = await authenticatedFetch('/api/ai/generate-note', {
         method: 'POST',
         body: JSON.stringify({ transcript: "Placeholder transcript from visit..." })
       });
@@ -38,14 +53,23 @@ export default function ClinicalNotes() {
     }
   };
 
-  const handleSave = () => {
-    setSaving(true);
-    // Simulate save
-    setTimeout(() => {
-      setSaving(false);
-      alert('Note saved securely.');
+  const handleSave = async () => {
+    if (!appointmentId) {
+      alert("No appointment context available for demo.");
       router.back();
-    }, 1000);
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await authenticatedFetch(`/api/doctors/notes/${appointmentId}`, {
+        method: 'POST',
+        body: JSON.stringify(note)
+      });
+      if (res.ok) {
+        alert('Note saved securely.');
+        router.back();
+      }
+    } catch (e) { console.error(e); } finally { setSaving(false); }
   };
 
   return (

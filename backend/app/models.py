@@ -134,6 +134,7 @@ class AppointmentOut(BaseModel):
 # --- Messaging Models ---
 class MessageCreate(BaseModel):
     text: str
+    original_for_ai: Optional[str] = None
 
 class MessageOut(BaseModel):
     id: uuid.UUID

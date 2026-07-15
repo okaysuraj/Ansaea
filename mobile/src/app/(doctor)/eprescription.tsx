@@ -1,11 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Stethoscope, Plus, Send } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
 
 export default function EPrescription() {
+  const { authenticatedFetch } = useAuth();
+  const { appointmentId, patientId } = useLocalSearchParams();
   const [meds, setMeds] = useState([{ name: '', dosage: '', frequency: '' }]);
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (!appointmentId) return;
+    const fetchPresc = async () => {
+      try {
+        const res = await authenticatedFetch(`/api/doctors/prescriptions/${appointmentId}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.data?.medications && d.data.medications.length > 0) {
+            setMeds(d.data.medications);
+          }
+        }
+      } catch (e) {}
+    };
+    fetchPresc();
+  }, [appointmentId, authenticatedFetch]);
 
   const addMed = () => {
     setMeds([...meds, { name: '', dosage: '', frequency: '' }]);
@@ -17,13 +36,23 @@ export default function EPrescription() {
     setMeds(newMeds);
   };
 
-  const handleSend = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      alert('Prescription sent to pharmacy securely.');
+  const handleSend = async () => {
+    if (!appointmentId) {
+      alert("No appointment context available for demo.");
       router.back();
-    }, 1000);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await authenticatedFetch(`/api/doctors/prescriptions/${appointmentId}?patient_id=${patientId || '00000000-0000-0000-0000-000000000000'}`, {
+        method: 'POST',
+        body: JSON.stringify({ medications: meds, instructions: "" })
+      });
+      if (res.ok) {
+        alert('Prescription sent securely.');
+        router.back();
+      }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   return (

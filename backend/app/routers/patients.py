@@ -8,7 +8,7 @@ from app.db_models import User, VitalSign, MedicalRecord
 from app.models import VitalSignCreate, VitalSignOut, MedicalRecordCreate, MedicalRecordOut
 from datetime import datetime
 
-router = APIRouter(prefix="/patients", tags=["Patients"])
+router = APIRouter(prefix="/api/patients", tags=["Patients"])
 
 @router.post("/vitals", response_model=Dict[str, Any])
 async def add_vital_sign(vitals_in: VitalSignCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
