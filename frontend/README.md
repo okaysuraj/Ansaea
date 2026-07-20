@@ -31,9 +31,7 @@ Follow these steps to run the frontend server locally:
 
 ### 2. Environment Setup
 Create a `.env` file in the `frontend` folder or copy the example:
-```bash
-cp .env.example .env
-```
+
 Ensure `VITE_API_URL` points to your running backend (defaults to `http://localhost:8000/api`).
 
 ### 3. Run the App
@@ -42,5 +40,3 @@ Install dependencies and start the Vite dev server:
 npm install
 npm run dev
 ```
-
-The frontend will run on [http://localhost:5173](http://localhost:5173).

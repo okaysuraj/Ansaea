@@ -38,16 +38,6 @@ Install all the backend packages using `pip`:
 pip install -r requirements.txt
 ```
 
-### 3. Environment Variable Configuration
-The backend loads configuration settings from `.env` inside the current working directory. You can use the root `.env` or create a `.env` in this directory:
-
-1. Copy the example environment template:
-   ```bash
-   cp .env.example .env
-   ```
-2. Configure `DATABASE_URL` with your Neon Cloud Postgres database connection string (specifying `postgresql+asyncpg` as the protocol and appending `?sslmode=require` at the end).
-3. Set your `SECRET_KEY` and any optional API keys (like `GEMINI_API_KEY` for AI features).
-
 ### 4. Run the Backend API Server
 Start the development server using `uvicorn`:
 

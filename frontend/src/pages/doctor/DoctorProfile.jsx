@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserCheck, Award, DollarSign } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DoctorProfile() {
   const { user } = useAuth();

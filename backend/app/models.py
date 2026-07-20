@@ -232,3 +232,77 @@ class LabTestRequestOut(LabTestRequestCreate):
     report_url: Optional[str] = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+# --- Phase 1: Patient Profile & Settings Models ---
+class PatientProfileExtCreate(BaseModel):
+    full_name: Optional[str] = None
+    dob: Optional[str] = None
+    phone_number: Optional[str] = None
+    blood_group: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+
+class PatientProfileExtOut(PatientProfileExtCreate):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class SurgeryItem(BaseModel):
+    name: str
+    year: str
+
+class AllergyItem(BaseModel):
+    name: str
+    severity: str
+
+class MedicalHistoryCreate(BaseModel):
+    chronic_conditions: Optional[List[str]] = []
+    past_surgeries: Optional[List[SurgeryItem]] = []
+    allergies: Optional[List[AllergyItem]] = []
+
+class MedicalHistoryOut(MedicalHistoryCreate):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class NotificationPreferencesCreate(BaseModel):
+    push_enabled: Optional[bool] = True
+    email_enabled: Optional[bool] = True
+    sms_enabled: Optional[bool] = False
+    appointment_alerts: Optional[bool] = True
+    medication_alerts: Optional[bool] = True
+    lab_alerts: Optional[bool] = True
+    marketing_alerts: Optional[bool] = False
+    dnd_enabled: Optional[bool] = False
+    dnd_start_time: Optional[str] = "22:00"
+    dnd_end_time: Optional[str] = "07:00"
+
+class NotificationPreferencesOut(NotificationPreferencesCreate):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Phase 4: Shared & Doctor Models ---
+class NotificationOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    title: str
+    message: str
+    type: str
+    is_read: bool
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class DoctorScheduleCreate(BaseModel):
+    date: str
+    slots: List[str]
+    auto_buffer_mins: int = 0
+
+class DoctorScheduleOut(DoctorScheduleCreate):
+    id: uuid.UUID
+    doctor_id: uuid.UUID
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

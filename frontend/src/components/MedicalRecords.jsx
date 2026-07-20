@@ -23,19 +23,7 @@ export default function MedicalRecords() {
   }, [authenticatedFetch]);
 
   const handleUpload = async () => {
-    try {
-      await authenticatedFetch('/api/tracker/records', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: 'CBC Blood Test',
-          record_type: 'Lab Report',
-          file_url: 'https://example.com/report.pdf'
-        })
-      });
-      fetchRecords(); // Refresh
-    } catch (e) {
-      console.error(e);
-    }
+    alert("File upload (S3/Firebase) integration coming soon. This requires setting up cloud storage buckets.");
   };
 
   const getIcon = (type) => {

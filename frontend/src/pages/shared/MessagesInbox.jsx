@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MessageSquare, Search } from 'lucide-react';
-import ChatSession from '../../../components/ChatSession';
+import ChatSession from '../../components/ChatSession';
 
 export default function MessagesInbox() {
   const [activeChat, setActiveChat] = useState(null);

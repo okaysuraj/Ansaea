@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MessageSquare, Phone, Video } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
-import ChatSession from '../../../components/ChatSession';
-import CallSession from '../../../components/CallSession';
+import { useAuth } from '../../context/AuthContext';
+import ChatSession from '../../components/ChatSession';
+import CallSession from '../../components/CallSession';
 
 export default function MyAppointments() {
   const { authenticatedFetch } = useAuth();

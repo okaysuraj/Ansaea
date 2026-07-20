@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Wind, BrainCircuit } from 'lucide-react';
-import MoodSelector from '../../../components/MoodSelector';
-import SelfCareTracker from '../../../components/SelfCareTracker';
-import BreathingExercise from '../../../components/BreathingExercise';
-import CBTDiary from '../../../components/CBTDiary';
+import MoodSelector from '../../components/MoodSelector';
+import SelfCareTracker from '../../components/SelfCareTracker';
+import BreathingExercise from '../../components/BreathingExercise';
+import CBTDiary from '../../components/CBTDiary';
 
 export default function MentalHealthTrackers() {
   const [activeTab, setActiveTab] = useState('breathing');

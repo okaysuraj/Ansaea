@@ -1,6 +1,6 @@
 import React from 'react';
-import VitalsTracker from '../../../components/VitalsTracker';
-import Analytics from '../../../components/Analytics';
+import VitalsTracker from '../../components/VitalsTracker';
+import Analytics from '../../components/Analytics';
 
 export default function HealthMetrics() {
   return (

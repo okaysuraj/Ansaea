@@ -64,6 +64,39 @@ class WebRTCManager:
 
 webrtc_manager = WebRTCManager()
 
+@router.get("/conversations", response_model=List[Dict[str, Any]])
+async def get_conversations(current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role == "doctor":
+        stmt = select(Appointment, User).join(User, Appointment.user_id == User.id).where(
+            Appointment.doctor_id == current_user.id
+        ).order_by(Appointment.date.desc())
+    else:
+        stmt = select(Appointment, User).join(User, Appointment.doctor_id == User.id).where(
+            Appointment.user_id == current_user.id
+        ).order_by(Appointment.date.desc())
+        
+    result = await db.execute(stmt)
+    records = result.all()
+    
+    # Simple deduplication by patient/doctor name just for the inbox list
+    seen = set()
+    conversations = []
+    
+    for appt, user in records:
+        key = user.id
+        if key not in seen:
+            seen.add(key)
+            conversations.append({
+                "appointment_id": str(appt.id),
+                "name": user.username if current_user.role == "doctor" else appt.doctor_name,
+                "role": "Patient" if current_user.role == "doctor" else appt.doctor_specialty,
+                "last_message": "Tap to view conversation",
+                "time": "Recent",
+                "unread": 0
+            })
+            
+    return conversations
+
 @router.get("/{appointment_id}/messages", response_model=List[MessageOut])
 async def get_messages(appointment_id: str, current_user = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:

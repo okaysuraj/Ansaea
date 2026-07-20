@@ -35,21 +35,7 @@ function ProfileBillingView() {
   const [topupAmount, setTopupAmount] = useState('');
 
   const handleTopup = async () => {
-    try {
-      const res = await authenticatedFetch('/billing/wallet/topup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(topupAmount), payment_gateway: 'mock' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWalletBalance(data.new_balance);
-        setTopupAmount('');
-        alert('Wallet topped up successfully!');
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    alert("Real payment gateway integration (Stripe/Razorpay) coming soon.");
   };
 
   const handleLinkAbha = async () => {
@@ -68,21 +54,7 @@ function ProfileBillingView() {
   };
 
   const syncWearable = async (deviceType) => {
-    try {
-      const res = await authenticatedFetch('/users/sync-wearable', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          device_type: deviceType,
-          data: { steps: Math.floor(Math.random()*10000), heart_rate: 70 + Math.floor(Math.random()*15) }
-        })
-      });
-      if (res.ok) {
-        alert(`${deviceType} synced successfully!`);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    alert(`${deviceType} SDK integration coming soon.`);
   };
 
   return (
@@ -433,135 +405,15 @@ function MessagesView() {
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
-  const [currentView, setCurrentView] = useState('dashboard'); // dashboard, selfcare, mindtools, appointments, messages, profile
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return <DashboardView />;
-      case 'selfcare':
-        return <SelfCareTracker />;
-      case 'mindtools':
-        return <MindToolsView />;
-      case 'appointments':
-        return <AppointmentsView />;
-      case 'messages':
-        return <MessagesView />;
-      case 'profile':
-        return <ProfileBillingView />;
-      default:
-        return <DashboardView />;
-    }
-  };
-
-  const getPageTitle = () => {
-    switch (currentView) {
-      case 'dashboard': return `Welcome back, ${user.username}`;
-      case 'selfcare': return 'Daily Self-Care Check';
-      case 'mindtools': return 'Cognitive Resiliency Kits';
-      case 'appointments': return 'Psychiatrist Directory';
-      case 'messages': return 'Messages Vault';
-      case 'profile': return 'Profile, Wallet & Wearables';
-      default: return 'Ansaea Control';
-    }
-  };
-
   return (
-    <div className="app-container">
-      {/* Sidebar navigation */}
-      <nav className="sidebar">
-        <div className="sidebar-logo">
-          <img src="/logo.png" alt="Ansaea Logo" style={{ height: '32px', width: 'auto' }} />
-          <span>Ansaea Mind</span>
+    <div>
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">Welcome back, {user?.username}</h1>
+        <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-success)' }}>
+          <UserCheck size={14} /> Database Sync Status: Active
         </div>
-
-        <ul className="nav-links">
-          <li>
-            <button
-              onClick={() => setCurrentView('dashboard')}
-              className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <LayoutDashboard size={18} /> Dashboard
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setCurrentView('selfcare')}
-              className={`nav-item ${currentView === 'selfcare' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <Heart size={18} /> Self-Care Checklist
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setCurrentView('mindtools')}
-              className={`nav-item ${currentView === 'mindtools' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <Wind size={18} /> Mindfulness Tools
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setCurrentView('appointments')}
-              className={`nav-item ${currentView === 'appointments' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <Calendar size={18} /> Book Session
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setCurrentView('messages')}
-              className={`nav-item ${currentView === 'messages' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <MessageSquare size={18} /> Messages
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setCurrentView('profile')}
-              className={`nav-item ${currentView === 'profile' ? 'active' : ''}`}
-              style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left' }}
-            >
-              <UserCheck size={18} /> Profile & Wallet
-            </button>
-          </li>
-        </ul>
-
-        {/* User profile foot */}
-        <div className="nav-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{user.username.substring(0, 2).toUpperCase()}</div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>{user.username}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{user.email}</div>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="nav-item"
-            style={{ background: 'transparent', border: 'none', width: '100%', color: 'var(--color-danger)', gap: '1rem', marginTop: '0.5rem' }}
-          >
-            <LogOut size={18} /> Sign Out
-          </button>
-        </div>
-      </nav>
-
-      {/* Main View Shell */}
-      <main className="main-content">
-        <div className="dashboard-header">
-          <h1 className="dashboard-title">{getPageTitle()}</h1>
-          <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-success)' }}>
-            <UserCheck size={14} /> Database Sync Status: Active
-          </div>
-        </div>
-
-        {renderView()}
-      </main>
+      </div>
+      <DashboardView />
     </div>
   );
 }

@@ -8,7 +8,9 @@ from datetime import datetime
 from app.database import get_db, engine
 from app.db_models import Base, User
 from app.auth import get_current_user
-from app.routers import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin
+from app.routers import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin, notifications, upload
+from app.cloudinary_service import init_cloudinary
+
 
 app = FastAPI(title="Ansaea Mental Health Portal API", version="1.0.0")
 
@@ -33,7 +35,8 @@ app.include_router(pharmacy.router)
 app.include_router(lab.router)
 app.include_router(billing.router)
 app.include_router(admin.router)
-
+app.include_router(notifications.router)
+app.include_router(upload.router)
 
 
 # --- Startup Event (Seeding Psychiatrists) ---
@@ -43,6 +46,10 @@ async def startup_event():
     print("Connecting to PostgreSQL database and creating tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+    # Init Cloudinary
+    init_cloudinary()
+
     
     # Mock seeding removed as users now register as clinicians dynamically.
 

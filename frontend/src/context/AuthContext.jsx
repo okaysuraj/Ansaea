@@ -98,7 +98,11 @@ export const AuthProvider = ({ children }) => {
       
       return true;
     } catch (err) {
-      setError(err.message);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
+        setError('This user does not exist. Please signup.');
+      } else {
+        setError(err.message);
+      }
       return false;
     }
   };

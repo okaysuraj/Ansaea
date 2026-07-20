@@ -259,3 +259,61 @@ class SystemSettings(Base):
     setting_key = Column(String, nullable=False, unique=True)
     setting_value = Column(Boolean, nullable=False, default=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class PatientProfileExt(Base):
+    __tablename__ = "patient_profiles_ext"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    full_name = Column(String, nullable=True)
+    dob = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    blood_group = Column(String, nullable=True)
+    emergency_contact_name = Column(String, nullable=True)
+    emergency_contact_phone = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class MedicalHistory(Base):
+    __tablename__ = "medical_histories"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    chronic_conditions = Column(JSON, nullable=True, default=list) # List[str]
+    past_surgeries = Column(JSON, nullable=True, default=list) # List[Dict]
+    allergies = Column(JSON, nullable=True, default=list) # List[Dict]
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class NotificationPreferences(Base):
+    __tablename__ = "notification_preferences"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    push_enabled = Column(Boolean, default=True)
+    email_enabled = Column(Boolean, default=True)
+    sms_enabled = Column(Boolean, default=False)
+    appointment_alerts = Column(Boolean, default=True)
+    medication_alerts = Column(Boolean, default=True)
+    lab_alerts = Column(Boolean, default=True)
+    marketing_alerts = Column(Boolean, default=False)
+    dnd_enabled = Column(Boolean, default=False)
+    dnd_start_time = Column(String, default="22:00")
+    dnd_end_time = Column(String, default="07:00")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String, nullable=False) # appointment, health_alert, system
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", foreign_keys=[user_id])
+
+class DoctorSchedule(Base):
+    __tablename__ = "doctor_schedules"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    doctor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    date = Column(String, nullable=False) # YYYY-MM-DD
+    slots = Column(JSON, nullable=False, default=list) # List of time slots e.g. ["09:00 AM", "09:30 AM"]
+    auto_buffer_mins = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)

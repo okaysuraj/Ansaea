@@ -15,9 +15,10 @@ export default function LoginScreen() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      // Wait for auth context to update, but typically we can navigate if no error is thrown
-      navigate('/dashboard');
+      const success = await login(email, password);
+      if (success) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       console.error(err);
     }

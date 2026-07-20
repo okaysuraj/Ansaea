@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserCheck, CreditCard, Link2, Watch, Heart } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function PatientProfile() {
   const { user, authenticatedFetch } = useAuth();

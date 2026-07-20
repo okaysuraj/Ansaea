@@ -17,10 +17,18 @@ import PatientDashboard from './pages/patient/PatientDashboard';
 import FindDoctors from './pages/patient/FindDoctors';
 import MyAppointments from './pages/patient/MyAppointments';
 import PatientProfile from './pages/patient/PatientProfile';
+import EditProfile from './pages/patient/EditProfile';
+import MedicalHistorySetup from './pages/patient/MedicalHistorySetup';
+import BloodPressureHistory from './pages/patient/BloodPressureHistory';
+import BloodSugarHistory from './pages/patient/BloodSugarHistory';
+import WeightBmiTracker from './pages/patient/WeightBmiTracker';
+import SleepTracker from './pages/patient/SleepTracker';
+import StressTracker from './pages/patient/StressTracker';
 import BookingSuccess from './pages/patient/BookingSuccess';
 import MedicalRecords from './pages/patient/MedicalRecords';
 import HealthMetrics from './pages/patient/HealthMetrics';
 import MentalHealthTrackers from './pages/patient/MentalHealthTrackers';
+import DailyMoodCheckIn from './pages/patient/DailyMoodCheckIn';
 
 // Doctor Pages (Phase 3 & 4)
 import DoctorLayout from './pages/doctor/DoctorLayout';
@@ -30,18 +38,15 @@ import SlotManagement from './pages/doctor/SlotManagement';
 import PatientDirectory from './pages/doctor/PatientDirectory';
 import ConsultationSetup from './pages/doctor/ConsultationSetup';
 import ConsultationWorkspace from './pages/doctor/ConsultationWorkspace';
+import PatientProfileView from './pages/doctor/PatientProfileView';
+import SettingsHome from './pages/doctor/SettingsHome';
 
 // Shared Pages (Phase 4)
 import MessagesInbox from './pages/shared/MessagesInbox';
 import NotificationsCenter from './pages/shared/NotificationsCenter';
+import NotificationSettings from './pages/shared/NotificationSettings';
 
-// Doctor Pages (Phase 3)
-import DoctorLayout from './pages/doctor/DoctorLayout';
-import DoctorDashboard from './pages/doctor/DoctorDashboard';
-import DoctorProfile from './pages/doctor/DoctorProfile';
-import SlotManagement from './pages/doctor/SlotManagement';
-import PatientDirectory from './pages/doctor/PatientDirectory';
-import ConsultationSetup from './pages/doctor/ConsultationSetup';
+
 
 // Admin Pages (Phase 7)
 import AdminLayout from './pages/admin/AdminLayout';
@@ -110,12 +115,21 @@ function AppContent() {
         <Route path="find-doctors" element={<FindDoctors />} />
         <Route path="appointments" element={<MyAppointments />} />
         <Route path="profile" element={<PatientProfile />} />
+        <Route path="edit-profile" element={<EditProfile />} />
         <Route path="booking-success" element={<BookingSuccess />} />
+        <Route path="medical-history" element={<MedicalHistorySetup />} />
+        <Route path="blood-pressure" element={<BloodPressureHistory />} />
+        <Route path="blood-sugar" element={<BloodSugarHistory />} />
+        <Route path="weight-bmi" element={<WeightBmiTracker />} />
+        <Route path="sleep-tracker" element={<SleepTracker />} />
+        <Route path="stress-tracker" element={<StressTracker />} />
         <Route path="records" element={<MedicalRecords />} />
         <Route path="health-metrics" element={<HealthMetrics />} />
         <Route path="mental-health" element={<MentalHealthTrackers />} />
+        <Route path="mood-check-in" element={<DailyMoodCheckIn />} />
         <Route path="messages" element={<MessagesInbox />} />
         <Route path="notifications" element={<NotificationsCenter />} />
+        <Route path="notification-settings" element={<NotificationSettings />} />
       </Route>
 
       {/* Doctor Portal */}
@@ -123,11 +137,14 @@ function AppContent() {
         <Route path="dashboard" element={<DoctorDashboard />} />
         <Route path="schedule" element={<SlotManagement />} />
         <Route path="patients" element={<PatientDirectory />} />
+        <Route path="patients/:id" element={<PatientProfileView />} />
         <Route path="consultation-setup" element={<ConsultationSetup />} />
         <Route path="workspace" element={<ConsultationWorkspace />} />
         <Route path="profile" element={<DoctorProfile />} />
+        <Route path="settings" element={<SettingsHome />} />
         <Route path="messages" element={<MessagesInbox />} />
         <Route path="notifications" element={<NotificationsCenter />} />
+        <Route path="notification-settings" element={<NotificationSettings />} />
       </Route>
 
       {/* Admin Portal */}

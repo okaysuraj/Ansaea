@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Video, FileText, Pill, User } from 'lucide-react';
-import CallSession from '../../../components/CallSession';
-import ClinicalNotes from '../../../components/ClinicalNotes';
-import EPrescription from '../../../components/EPrescription';
+import CallSession from '../../components/CallSession';
+import ClinicalNotes from '../../components/ClinicalNotes';
+import EPrescription from '../../components/EPrescription';
 
 export default function ConsultationWorkspace() {
   const [activeTab, setActiveTab] = useState('call'); // call, notes, prescription

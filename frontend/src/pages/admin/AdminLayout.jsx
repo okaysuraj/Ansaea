@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { LayoutDashboard, Users, CreditCard, Settings, Activity, LogOut } from 'lucide-react';
 
 export default function AdminLayout() {

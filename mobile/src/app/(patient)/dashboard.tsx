@@ -1,15 +1,47 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Activity, Heart, Brain, Calendar } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
+import { router } from 'expo-router';
 
 export default function PatientDashboard() {
-  const { user } = useAuth();
+  const { user, authenticatedFetch } = useAuth();
+  const [latestVitals, setLatestVitals] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchVitals = async () => {
+    try {
+      const res = await authenticatedFetch('/api/tracker/vitals');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setLatestVitals(data[0]);
+        } else {
+          setLatestVitals(null);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchVitals();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchVitals();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView 
+        contentContainerStyle={styles.scroll}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0ea5e9" />}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Hello, {user?.username || 'Patient'}</Text>
           <Text style={styles.subtitle}>Let's check in on your health today.</Text>
@@ -20,9 +52,17 @@ export default function PatientDashboard() {
             <Activity size={20} color="#0ea5e9" />
             <Text style={styles.cardTitle}>Daily Vitals</Text>
           </View>
-          <Text style={styles.cardDesc}>Heart Rate: 72 BPM</Text>
-          <Text style={styles.cardDesc}>SpO2: 98%</Text>
-          <TouchableOpacity style={styles.button}><Text style={styles.buttonText}>Log Vitals</Text></TouchableOpacity>
+          {latestVitals ? (
+            <>
+              <Text style={styles.cardDesc}>Heart Rate: {latestVitals.heart_rate || '--'} BPM</Text>
+              <Text style={styles.cardDesc}>SpO2: {latestVitals.spo2 || '--'}%</Text>
+            </>
+          ) : (
+            <Text style={styles.cardDesc}>No vitals logged recently.</Text>
+          )}
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/(patient)/vitals')}>
+            <Text style={styles.buttonText}>Log Vitals</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.row}>
