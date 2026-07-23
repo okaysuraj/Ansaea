@@ -6,10 +6,10 @@ from datetime import datetime
 
 # Imports
 from app.database import get_db, engine
-from app.db_models import Base, User
+from app.models.db_models import Base, User
 from app.auth import get_current_user
-from app.routers import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin, notifications, upload
-from app.cloudinary_service import init_cloudinary
+from app.routes import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin, notifications, upload
+from app.services.cloudinary_service import init_cloudinary
 
 
 app = FastAPI(title="Ansaea Mental Health Portal API", version="1.0.0")

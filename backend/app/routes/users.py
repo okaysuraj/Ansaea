@@ -4,7 +4,7 @@ from sqlalchemy import select
 from pydantic import BaseModel
 
 from app.database import get_db
-from app.db_models import User, DoctorProfile
+from app.models.db_models import User, DoctorProfile
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -75,7 +75,7 @@ async def sync_wearable(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    from app.db_models import WearableData
+    from app.models.db_models import WearableData
     from datetime import datetime
     
     # Store mocked wearable data

@@ -6,8 +6,8 @@ from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 import uuid
 
-from app.models import DoctorOut, AppointmentCreate, AppointmentOut
-from app.db_models import User, DoctorProfile, Appointment
+from app.models.models import DoctorOut, AppointmentCreate, AppointmentOut
+from app.models.db_models import User, DoctorProfile, Appointment
 from app.auth import get_current_user
 from app.database import get_db
 

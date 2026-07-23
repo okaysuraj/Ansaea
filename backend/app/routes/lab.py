@@ -4,8 +4,8 @@ from sqlalchemy import select
 from typing import List, Dict, Any
 from app.database import get_db
 from app.auth import get_current_user
-from app.db_models import User, LabTestRequest
-from app.models import LabTestRequestOut
+from app.models.db_models import User, LabTestRequest
+from app.models.models import LabTestRequestOut
 
 router = APIRouter(prefix="/api/lab", tags=["Lab"])
 

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import List
 from app.auth import get_current_user
-from app.db_models import User
-from app.ai_service import ai_therapist
+from app.models.db_models import User
+from app.services.ai_service import ai_therapist
 
 router = APIRouter(prefix="/api/ai", tags=["AI Intelligence"])
 

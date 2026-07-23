@@ -14,32 +14,32 @@ import RoleSelection from './pages/auth/RoleSelection';
 // Patient Pages (Phase 2 & 5)
 import PatientLayout from './pages/patient/PatientLayout';
 import PatientDashboard from './pages/patient/PatientDashboard';
-import FindDoctors from './pages/patient/FindDoctors';
-import MyAppointments from './pages/patient/MyAppointments';
-import PatientProfile from './pages/patient/PatientProfile';
-import EditProfile from './pages/patient/EditProfile';
-import MedicalHistorySetup from './pages/patient/MedicalHistorySetup';
-import BloodPressureHistory from './pages/patient/BloodPressureHistory';
-import BloodSugarHistory from './pages/patient/BloodSugarHistory';
-import WeightBmiTracker from './pages/patient/WeightBmiTracker';
-import SleepTracker from './pages/patient/SleepTracker';
-import StressTracker from './pages/patient/StressTracker';
-import BookingSuccess from './pages/patient/BookingSuccess';
-import MedicalRecords from './pages/patient/MedicalRecords';
-import HealthMetrics from './pages/patient/HealthMetrics';
-import MentalHealthTrackers from './pages/patient/MentalHealthTrackers';
-import DailyMoodCheckIn from './pages/patient/DailyMoodCheckIn';
+import FindDoctors from './pages/patient/appointments/FindDoctors';
+import MyAppointments from './pages/patient/appointments/MyAppointments';
+import PatientProfile from './pages/patient/profile/PatientProfile';
+import EditProfile from './pages/patient/profile/EditProfile';
+import MedicalHistorySetup from './pages/patient/profile/MedicalHistorySetup';
+import BloodPressureHistory from './pages/patient/metrics/BloodPressureHistory';
+import BloodSugarHistory from './pages/patient/metrics/BloodSugarHistory';
+import WeightBmiTracker from './pages/patient/metrics/WeightBmiTracker';
+import SleepTracker from './pages/patient/metrics/SleepTracker';
+import StressTracker from './pages/patient/metrics/StressTracker';
+import BookingSuccess from './pages/patient/appointments/BookingSuccess';
+import MedicalRecords from './pages/patient/profile/MedicalRecords';
+import HealthMetrics from './pages/patient/metrics/HealthMetrics';
+import MentalHealthTrackers from './pages/patient/metrics/MentalHealthTrackers';
+import DailyMoodCheckIn from './pages/patient/metrics/DailyMoodCheckIn';
 
 // Doctor Pages (Phase 3 & 4)
 import DoctorLayout from './pages/doctor/DoctorLayout';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
-import DoctorProfile from './pages/doctor/DoctorProfile';
-import SlotManagement from './pages/doctor/SlotManagement';
-import PatientDirectory from './pages/doctor/PatientDirectory';
-import ConsultationSetup from './pages/doctor/ConsultationSetup';
-import ConsultationWorkspace from './pages/doctor/ConsultationWorkspace';
-import PatientProfileView from './pages/doctor/PatientProfileView';
-import SettingsHome from './pages/doctor/SettingsHome';
+import DoctorProfile from './pages/doctor/profile/DoctorProfile';
+import SlotManagement from './pages/doctor/appointments/SlotManagement';
+import PatientDirectory from './pages/doctor/patients/PatientDirectory';
+import ConsultationSetup from './pages/doctor/consultations/ConsultationSetup';
+import ConsultationWorkspace from './pages/doctor/consultations/ConsultationWorkspace';
+import PatientProfileView from './pages/doctor/patients/PatientProfileView';
+import SettingsHome from './pages/doctor/settings/SettingsHome';
 
 // Shared Pages (Phase 4)
 import MessagesInbox from './pages/shared/MessagesInbox';

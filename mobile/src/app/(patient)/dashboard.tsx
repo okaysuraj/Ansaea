@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 
 export default function PatientDashboard() {
   const { user, authenticatedFetch } = useAuth();
-  const [latestVitals, setLatestVitals] = useState(null);
+  const [latestVitals, setLatestVitals] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchVitals = async () => {

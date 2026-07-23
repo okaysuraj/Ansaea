@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function PatientRoster() {
   const { authenticatedFetch } = useAuth();
-  const [patients, setPatients] = React.useState([]);
+  const [patients, setPatients] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const fetchRoster = async () => {

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from app.database import get_db
-from app.db_models import User, PaymentTransaction
+from app.models.db_models import User, PaymentTransaction
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/billing", tags=["Billing"])

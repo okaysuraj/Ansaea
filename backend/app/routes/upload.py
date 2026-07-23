@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.auth import get_current_user
-from app.cloudinary_service import upload_image
+from app.services.cloudinary_service import upload_image
 from typing import Dict, Any
 
 router = APIRouter(prefix="/api/upload", tags=["Upload"])

@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
 
-from app.models import MoodLogCreate, MoodLogOut, CBTLogCreate, CBTLogOut, HabitLogCreate, HabitLogOut, VitalSignCreate, VitalSignOut, MedicalRecordCreate, MedicalRecordOut
-from app.db_models import MoodLog, CBTLog, HabitLog, VitalSign, MedicalRecord
+from app.models.models import MoodLogCreate, MoodLogOut, CBTLogCreate, CBTLogOut, HabitLogCreate, HabitLogOut, VitalSignCreate, VitalSignOut, MedicalRecordCreate, MedicalRecordOut
+from app.models.db_models import MoodLog, CBTLog, HabitLog, VitalSign, MedicalRecord
 from app.auth import get_current_user
 from app.database import get_db
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from typing import List, Dict, Any
 from app.database import get_db
 from app.auth import get_current_user
-from app.db_models import User, DoctorProfile, SystemSettings, AuditLog
+from app.models.db_models import User, DoctorProfile, SystemSettings, AuditLog
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])

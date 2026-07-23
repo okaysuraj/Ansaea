@@ -5,9 +5,9 @@ from typing import List, Dict, Any
 import uuid
 from app.database import get_db
 from app.auth import get_current_user
-from app.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile
-from app.models import PrescriptionCreate, PrescriptionOut, ClinicalNoteCreate, ClinicalNoteOut, DoctorScheduleCreate, DoctorScheduleOut
-from app.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile, ClinicalNote, DoctorSchedule, Appointment, Message, PatientProfileExt, MedicalHistory
+from app.models.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile
+from app.models.models import PrescriptionCreate, PrescriptionOut, ClinicalNoteCreate, ClinicalNoteOut, DoctorScheduleCreate, DoctorScheduleOut
+from app.models.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile, ClinicalNote, DoctorSchedule, Appointment, Message, PatientProfileExt, MedicalHistory
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/api/doctors", tags=["Doctors"])

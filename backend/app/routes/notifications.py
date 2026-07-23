@@ -4,8 +4,8 @@ from sqlalchemy import select, update
 from typing import List, Dict, Any
 from app.database import get_db
 from app.auth import get_current_user
-from app.db_models import User, Notification
-from app.models import NotificationOut
+from app.models.db_models import User, Notification
+from app.models.models import NotificationOut
 import uuid
 
 router = APIRouter(prefix="/api/notifications", tags=["Notifications"])

@@ -6,7 +6,7 @@ import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
-from app.db_models import User
+from app.models.db_models import User
 import uuid
 
 # Initialize Firebase Admin using environment variables directly

@@ -7,11 +7,11 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models import MessageCreate, MessageOut
-from app.db_models import Message, Appointment
+from app.models.models import MessageCreate, MessageOut
+from app.models.db_models import Message, Appointment
 from app.auth import get_current_user
 from app.database import get_db, AsyncSessionLocal
-from app.ai_service import ai_therapist
+from app.services.ai_service import ai_therapist
 
 router = APIRouter(prefix="/api/chat", tags=["Chat & Call Simulator"])
 
