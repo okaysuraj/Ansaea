@@ -317,3 +317,67 @@ class DoctorSchedule(Base):
     slots = Column(JSON, nullable=False, default=list) # List of time slots e.g. ["09:00 AM", "09:30 AM"]
     auto_buffer_mins = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    subject = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    category = Column(String, nullable=False) # billing, technical, medical, other
+    status = Column(String, default="open") # open, in_progress, resolved, closed
+    priority = Column(String, default="medium") # low, medium, high, urgent
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class VideoSession(Base):
+    __tablename__ = "video_sessions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    appointment_id = Column(UUID(as_uuid=True), ForeignKey("appointments.id"), nullable=False, unique=True)
+    room_url = Column(String, nullable=False)
+    status = Column(String, default="created") # created, active, completed
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class AIAnalysisResult(Base):
+    __tablename__ = "ai_analysis_results"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    analysis_type = Column(String, nullable=False) # e.g. 'cbt_feedback', 'ocr_extraction'
+    input_data = Column(Text, nullable=False)
+    output_data = Column(Text, nullable=False)
+    confidence_score = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class FraudAlert(Base):
+    __tablename__ = "fraud_alerts"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    type = Column(String, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    severity = Column(String, default="medium") # low, medium, high, urgent
+    status = Column(String, default="new") # new, investigating, resolved
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class GlobalEmergencyContact(Base):
+    __tablename__ = "global_emergency_contacts"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    type = Column(String, nullable=False) # global, platform
+
+class LabAgent(Base):
+    __tablename__ = "lab_agents"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    lab_org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False)
+    name = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    current_status = Column(String, default="available") # available, busy, off_duty
+    
+class LabTestTracking(Base):
+    __tablename__ = "lab_test_tracking"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    lab_test_request_id = Column(UUID(as_uuid=True), ForeignKey("lab_test_requests.id"), nullable=False, unique=True)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("lab_agents.id"), nullable=True)
+    eta = Column(String, nullable=True)
+    tracking_status = Column(String, default="pending") # pending, assigned, en_route, collected, processing, completed
+
+

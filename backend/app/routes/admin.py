@@ -126,3 +126,26 @@ async def get_audit_logs(current_user: User = Depends(get_current_user), db: Asy
         "actor": log.actor_id, # In a real app, join with User table to get name
         "timestamp": log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
     } for log in logs]
+
+from app.models.db_models import FraudAlert
+
+@router.get("/fraud-alerts")
+async def get_fraud_alerts(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.role != "super_admin" and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied.")
+    
+    stmt = select(FraudAlert).order_by(FraudAlert.timestamp.desc())
+    result = await db.execute(stmt)
+    alerts = result.scalars().all()
+    
+    return [
+        {
+            "id": str(alert.id),
+            "type": alert.type,
+            "user_id": str(alert.user_id),
+            "severity": alert.severity,
+            "timestamp": alert.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": alert.status
+        }
+        for alert in alerts
+    ]

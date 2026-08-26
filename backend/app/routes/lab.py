@@ -40,3 +40,44 @@ async def update_request_status(request_id: str, status: str, current_user: User
     
     await db.commit()
     return {"status": "success", "message": f"Test request status updated to {status}"}
+
+@router.get("/sample-tracking")
+async def track_samples(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Patient endpoint to track their lab sample collection.
+    """
+    from app.models.db_models import LabTestTracking, LabAgent
+    
+    stmt = select(LabTestRequest).where(LabTestRequest.patient_id == current_user.id).order_by(LabTestRequest.created_at.desc())
+    result = await db.execute(stmt)
+    requests = result.scalars().all()
+    
+    if not requests:
+        return None
+        
+    latest = requests[0]
+    
+    # Query tracking and agent
+    track_stmt = select(LabTestTracking).where(LabTestTracking.lab_test_request_id == latest.id)
+    tracking = (await db.execute(track_stmt)).scalar_one_or_none()
+    
+    agent_info = "N/A"
+    eta_info = "N/A"
+    status_text = "Processing in Lab"
+    
+    if tracking:
+        status_text = tracking.tracking_status.replace("_", " ").title()
+        eta_info = tracking.eta or "N/A"
+        if tracking.agent_id:
+            agent_stmt = select(LabAgent).where(LabAgent.id == tracking.agent_id)
+            agent = (await db.execute(agent_stmt)).scalar_one_or_none()
+            if agent:
+                agent_info = f"{agent.name} ({agent.phone})"
+    
+    return {
+        "id": latest.id.hex,
+        "test_names": latest.test_names,
+        "status": status_text,
+        "agent": agent_info,
+        "eta": eta_info
+    }

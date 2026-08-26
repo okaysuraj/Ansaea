@@ -9,6 +9,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    } if "postgresql" in DATABASE_URL else {}
 )
 
 AsyncSessionLocal = async_sessionmaker(

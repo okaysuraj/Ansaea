@@ -1,17 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 export default function EarningsOverview() {
+    const { authenticatedFetch } = useAuth();
+    const [earnings, setEarnings] = useState({ total_earnings: "$0.00", recent_transactions: [] });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchEarnings = async () => {
+            try {
+                const res = await authenticatedFetch('/api/billing/earnings');
+                if (res.ok) {
+                    setEarnings(await res.json());
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEarnings();
+    }, [authenticatedFetch]);
+
+    if (loading) {
+        return <ActivityIndicator color="#0ea5e9" style={{ marginTop: 20 }} />;
+    }
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Earnings Overview</Text>
             <View style={styles.card}>
-                <Text style={styles.label}>Total Earnings this Month</Text>
-                <Text style={styles.amount}>$4,250.00</Text>
+                <Text style={styles.label}>Total Earnings</Text>
+                <Text style={styles.amount}>{earnings.total_earnings}</Text>
             </View>
             <View style={styles.card}>
-                <Text style={styles.label}>Pending Payouts</Text>
-                <Text style={styles.amount}>$320.00</Text>
+                <Text style={styles.label}>Recent Transactions</Text>
+                {earnings.recent_transactions.length === 0 ? (
+                    <Text>No recent transactions.</Text>
+                ) : (
+                    earnings.recent_transactions.map((txn: any) => (
+                        <View key={txn.id} style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4 }}>
+                            <Text>{txn.date}</Text>
+                            <Text>{txn.amount}</Text>
+                        </View>
+                    ))
+                )}
             </View>
         </View>
     );

@@ -60,7 +60,7 @@ export default function PatientDashboard() {
           ) : (
             <Text style={styles.cardDesc}>No vitals logged recently.</Text>
           )}
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/(patient)/vitals')}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/(patient)/(metrics)/vitals')}>
             <Text style={styles.buttonText}>Log Vitals</Text>
           </TouchableOpacity>
         </View>

@@ -26,20 +26,6 @@ export default function LabLayout() {
           tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="tests"
-        options={{
-          title: 'Tests',
-          tabBarIcon: ({ color }) => <FlaskConical size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: 'Reports',
-          tabBarIcon: ({ color }) => <ClipboardList size={24} color={color} />,
-        }}
-      />
     </Tabs>
   );
 }

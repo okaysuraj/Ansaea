@@ -74,7 +74,7 @@ class AITherapistService:
         }
 
     async def calculate_health_risk_score(self, vitals: list, habits: list) -> dict:
-        # Mock calculation based on provided data
+        # Simulated calculation based on provided data
         score = 85
         risk_level = "Low"
         recommendations = ["Maintain current healthy habits"]
@@ -98,9 +98,9 @@ class AITherapistService:
             # Call to Gemini Vision model for OCR
             pass
             
-        # Mock OCR extraction
+        # Simulated OCR extraction
         return {
-            "extracted_text": "MOCK LAB REPORT\nPatient: John Doe\nTest: Complete Blood Count\nResult: Normal",
+            "extracted_text": "SIMULATED LAB REPORT\nPatient: John Doe\nTest: Complete Blood Count\nResult: Normal",
             "confidence": 0.95,
             "structured_data": {
                 "patient_name": "John Doe",

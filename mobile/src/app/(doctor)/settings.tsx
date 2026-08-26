@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { router } from 'expo-router';
 import { ArrowLeft, User, Shield, Globe, Bell, Share2, FileCheck, HelpCircle, Headset, LogOut } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SettingsHome() {
   const { user, logout } = useAuth();

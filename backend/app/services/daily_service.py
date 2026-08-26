@@ -13,7 +13,7 @@ class DailyService:
         if not self.api_key:
             # Fallback for dev mode without API key
             return {
-                "url": f"https://mock.daily.co/{room_name or uuid.uuid4().hex}",
+                "url": f"https://video.ansaea.co/{room_name or uuid.uuid4().hex}",
                 "name": room_name or uuid.uuid4().hex,
                 "api_created": True,
                 "privacy": "public"

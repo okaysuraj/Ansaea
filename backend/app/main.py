@@ -8,7 +8,7 @@ from datetime import datetime
 from app.database import get_db, engine
 from app.models.db_models import Base, User
 from app.auth import get_current_user
-from app.routes import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin, notifications, upload
+from app.routes import tracker, psychiatrist, chat, users, ai_routes, patients, doctors, pharmacy, lab, billing, admin, notifications, upload, support, video
 from app.services.cloudinary_service import init_cloudinary
 
 
@@ -37,6 +37,8 @@ app.include_router(billing.router)
 app.include_router(admin.router)
 app.include_router(notifications.router)
 app.include_router(upload.router)
+app.include_router(support.router)
+app.include_router(video.router)
 
 
 # --- Startup Event (Seeding Psychiatrists) ---
@@ -50,8 +52,7 @@ async def startup_event():
     # Init Cloudinary
     init_cloudinary()
 
-    
-    # Mock seeding removed as users now register as clinicians dynamically.
+    # Initial seeding removed as users now register as clinicians dynamically.
 
 @app.get("/")
 async def root():

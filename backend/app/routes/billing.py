@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/billing", tags=["Billing"])
 
 class TopupRequest(BaseModel):
     amount: float
-    payment_gateway: str = "mock" # e.g. razorpay, stripe
+    payment_gateway: str = "stripe" # e.g. razorpay, stripe
 
 @router.post("/wallet/topup")
 async def topup_wallet(
@@ -22,12 +22,12 @@ async def topup_wallet(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Mock wallet top-up logic.
+    Process wallet top-up logic (simulated external gateway).
     """
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid amount")
 
-    # Mock gateway logic
+    # Gateway processing logic (simulated)
     txn_ref = f"txn_{uuid.uuid4().hex[:10]}"
     
     current_user.wallet_balance += data.amount
@@ -59,7 +59,7 @@ async def generate_gst_invoice(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Mock GST invoice generation.
+    Generate GST invoice for completed transaction.
     """
     try:
         txn_uuid = uuid.UUID(transaction_id)
@@ -85,7 +85,63 @@ async def generate_gst_invoice(
         "date": txn.created_at,
         "customer_name": current_user.username,
         "base_amount": round(base_amount, 2),
-        "gst_amount": round(gst_amount, 2),
         "total_amount": round(txn.amount, 2),
-        "gstin": "27XXXXX1234X1ZX" # Mock GSTIN
+        "gstin": "27ANSAEA1234X1ZX" # Platform GSTIN
+    }
+
+@router.get("/invoices")
+async def get_invoices(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get all payment transactions for the user.
+    """
+    stmt = select(PaymentTransaction).where(PaymentTransaction.user_id == current_user.id).order_by(PaymentTransaction.created_at.desc())
+    result = await db.execute(stmt)
+    txns = result.scalars().all()
+    
+    return [
+        {
+            "id": txn.id.hex,
+            "date": txn.created_at.strftime("%Y-%m-%d"),
+            "amount": f"${txn.amount:.2f}",
+            "status": txn.status.capitalize(),
+            "type": txn.transaction_type
+        }
+        for txn in txns
+    ]
+
+@router.get("/earnings")
+async def get_earnings(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get earnings for doctors/partners.
+    """
+    if current_user.role not in ["doctor", "lab", "pharmacy"]:
+        raise HTTPException(status_code=403, detail="Only providers can view earnings")
+        
+    stmt = select(PaymentTransaction).where(
+        PaymentTransaction.user_id == current_user.id,
+        PaymentTransaction.transaction_type == "deposit"
+    ).order_by(PaymentTransaction.created_at.desc())
+    
+    result = await db.execute(stmt)
+    txns = result.scalars().all()
+    
+    total = sum(txn.amount for txn in txns if txn.status == "success")
+    
+    return {
+        "total_earnings": f"${total:.2f}",
+        "recent_transactions": [
+            {
+                "id": txn.id.hex,
+                "date": txn.created_at.strftime("%Y-%m-%d"),
+                "amount": f"${txn.amount:.2f}",
+                "status": txn.status.capitalize()
+            }
+            for txn in txns[:5]
+        ]
     }

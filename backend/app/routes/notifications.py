@@ -16,20 +16,6 @@ async def get_notifications(current_user: User = Depends(get_current_user), db: 
     result = await db.execute(stmt)
     notifications = result.scalars().all()
     
-    # Generate some mock notifications if empty, just to demonstrate the UI
-    if not notifications:
-        mocks = [
-            Notification(user_id=current_user.id, title="New Appointment", message="You have a new consultation scheduled for tomorrow at 10:00 AM.", type="appointment"),
-            Notification(user_id=current_user.id, title="Health Alert", message="Your recent blood pressure reading is elevated.", type="health_alert"),
-            Notification(user_id=current_user.id, title="System Update", message="Ansaea app has been updated with new features.", type="system"),
-        ]
-        db.add_all(mocks)
-        await db.commit()
-        
-        # Refetch
-        result = await db.execute(stmt)
-        notifications = result.scalars().all()
-
     return notifications
 
 @router.put("/read-all", response_model=Dict[str, Any])

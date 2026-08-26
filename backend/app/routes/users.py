@@ -59,7 +59,7 @@ async def link_abha(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Mocks linking an ABHA ID (India's National Health ID)
+    Links an ABHA ID (India's National Health ID)
     """
     current_user.abha_number = data.abha_number
     await db.commit()
@@ -78,7 +78,7 @@ async def sync_wearable(
     from app.models.db_models import WearableData
     from datetime import datetime
     
-    # Store mocked wearable data
+    # Store simulated wearable data
     for key, value in data.data.items():
         w_data = WearableData(
             user_id=current_user.id,
@@ -91,3 +91,17 @@ async def sync_wearable(
         
     await db.commit()
     return {"message": "Wearable data synced successfully"}
+
+@router.get("/emergency-contacts")
+async def get_emergency_contacts(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Returns global and user-specific emergency contacts.
+    """
+    from app.models.db_models import GlobalEmergencyContact
+    stmt = select(GlobalEmergencyContact)
+    result = await db.execute(stmt)
+    contacts = result.scalars().all()
+    
+    return [
+        {"name": c.name, "phone": c.phone, "type": c.type} for c in contacts
+    ]

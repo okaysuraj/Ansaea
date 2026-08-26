@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from typing import List, Dict, Any
 import uuid
 from app.database import get_db
 from app.auth import get_current_user
-from app.models.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile
 from app.models.models import PrescriptionCreate, PrescriptionOut, ClinicalNoteCreate, ClinicalNoteOut, DoctorScheduleCreate, DoctorScheduleOut
-from app.models.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile, ClinicalNote, DoctorSchedule, Appointment, Message, PatientProfileExt, MedicalHistory
+from app.models.db_models import User, Prescription, PharmacyOrder, Organization, PaymentTransaction, DoctorProfile, ClinicalNote, DoctorSchedule, Appointment, Message, PatientProfileExt, MedicalHistory, MedicalRecord
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/api/doctors", tags=["Doctors"])
@@ -117,9 +116,20 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user), db
     )
     consults_count = (await db.execute(stmt_appts)).scalar() or 0
     
-    # Mocking reports and messages for now since we don't have direct counters yet
-    reports_count = 3 
-    messages_count = 5
+    # Real unread messages (logic replaced with a join query on messages where sender is not doctor)
+    stmt_msgs = select(func.count(Message.id)).join(Appointment).where(
+        Appointment.doctor_id == current_user.id,
+        Message.sender == "user" # assuming 'user' is the patient
+    )
+    messages_count = (await db.execute(stmt_msgs)).scalar() or 0
+    
+    # Real pending reports (number of appointments missing clinical notes for this doctor)
+    stmt_reports = select(func.count(Appointment.id)).outerjoin(ClinicalNote, Appointment.id == ClinicalNote.appointment_id).where(
+        Appointment.doctor_id == current_user.id,
+        Appointment.status == "completed",
+        ClinicalNote.id == None
+    )
+    reports_count = (await db.execute(stmt_reports)).scalar() or 0
     
     return {
         "consults_today": consults_count,
@@ -171,7 +181,7 @@ async def get_doctor_patients(current_user: User = Depends(get_current_user), db
             "id": str(p.id),
             "name": p.username,
             "email": p.email,
-            "status": "Active" # Mock status for now
+            "status": "Active" # Active by default
         }
         for p in patients
     ]

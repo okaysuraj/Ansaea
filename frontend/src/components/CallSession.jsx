@@ -76,8 +76,21 @@ export default function CallSession({ appointment, isVideo, onClose }) {
         }
       });
 
-      // Join the Daily room using a mock or real URL
-      const dailyUrl = `https://mock.daily.co/room-${appointment.id}`; // In reality, fetch from our backend
+      // Fetch the real room URL from the backend
+      let dailyUrl = `https://mock.daily.co/room-${appointment.id}`; // Fallback
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:8000/api/video/room/${appointment.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            dailyUrl = data.url;
+        }
+      } catch (e) {
+          console.error('Failed to get real video room', e);
+      }
+      
       await callFrameRef.current.join({ url: dailyUrl });
 
       callFrameRef.current.on('left-meeting', () => {

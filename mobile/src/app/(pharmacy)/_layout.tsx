@@ -26,20 +26,6 @@ export default function PharmacyLayout() {
           tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ color }) => <Pill size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="inventory"
-        options={{
-          title: 'Inventory',
-          tabBarIcon: ({ color }) => <Package size={24} color={color} />,
-        }}
-      />
     </Tabs>
   );
 }

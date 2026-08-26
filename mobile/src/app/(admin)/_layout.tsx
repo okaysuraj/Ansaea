@@ -26,20 +26,6 @@ export default function AdminLayout() {
           tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color }) => <Activity size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
-        }}
-      />
     </Tabs>
   );
 }

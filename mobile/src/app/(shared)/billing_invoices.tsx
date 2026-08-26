@@ -1,11 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BillingInvoices() {
-    const invoices = [
-        { id: '1', date: '2023-10-01', amount: '$50.00', status: 'Paid' },
-        { id: '2', date: '2023-10-15', amount: '$120.00', status: 'Pending' },
-    ];
+    const { authenticatedFetch } = useAuth();
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                const res = await authenticatedFetch('/api/billing/invoices');
+                if (res.ok) {
+                    setInvoices(await res.json());
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchInvoices();
+    }, [authenticatedFetch]);
+
+    if (loading) {
+        return <ActivityIndicator color="#0ea5e9" style={{ marginTop: 20 }} />;
+    }
 
     return (
         <View style={styles.container}>
@@ -17,11 +37,12 @@ export default function BillingInvoices() {
                     <View style={styles.item}>
                         <Text style={styles.date}>{item.date}</Text>
                         <Text style={styles.amount}>{item.amount}</Text>
-                        <Text style={[styles.status, { color: item.status === 'Paid' ? 'green' : 'orange' }]}>
+                        <Text style={[styles.status, { color: item.status === 'Success' ? 'green' : 'orange' }]}>
                             {item.status}
                         </Text>
                     </View>
                 )}
+                ListEmptyComponent={<Text>No invoices found.</Text>}
             />
         </View>
     );

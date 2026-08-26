@@ -9,11 +9,7 @@ export default function AdminLayout() {
   const location = useLocation();
 
   const navItems = [
-    { path: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard },
-    { path: '/admin/users', label: 'User Management', icon: Users },
-    { path: '/admin/billing', label: 'Finances & Billing', icon: CreditCard },
-    { path: '/admin/analytics', label: 'System Analytics', icon: Activity },
-    { path: '/admin/settings', label: 'Platform Settings', icon: Settings }
+    { path: '/admin/dashboard', label: 'Platform Overview', icon: LayoutDashboard }
   ];
 
   const handleLogout = () => {

@@ -38,7 +38,7 @@ Install all the backend packages using `pip`:
 pip install -r requirements.txt
 ```
 
-### 4. Run the Backend API Server
+### 3. Run the Backend API Server
 Start the development server using `uvicorn`:
 
 ```bash
