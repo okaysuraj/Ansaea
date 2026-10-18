@@ -28,7 +28,7 @@ export default function AppIntroduction() {
     if (step < slides.length - 1) {
       setStep(step + 1);
     } else {
-      navigate('/login');
+      navigate('/landing', { replace: true });
     }
   };
 

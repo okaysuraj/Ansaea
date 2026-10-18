@@ -13,6 +13,7 @@ import PharmacyLayout from './pages/pharmacy/PharmacyLayout';
 // Auth Pages (Lazy Loaded)
 const SplashScreen = lazy(() => import('./pages/auth/SplashScreen'));
 const AppIntroduction = lazy(() => import('./pages/auth/AppIntroduction'));
+const LandingPage = lazy(() => import('./pages/auth/LandingPage'));
 const LoginScreen = lazy(() => import('./pages/auth/LoginScreen'));
 const RegisterScreen = lazy(() => import('./pages/auth/RegisterScreen'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
@@ -152,6 +153,7 @@ function AppContent() {
         {/* Auth Flows */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/intro" element={<AppIntroduction />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={user ? <RoleRouter /> : <LoginScreen />} />
         <Route path="/register" element={user ? <RoleRouter /> : <RegisterScreen />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
