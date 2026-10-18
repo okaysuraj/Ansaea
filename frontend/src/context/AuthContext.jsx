@@ -1,84 +1,79 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged,
-  sendEmailVerification
+import {
+  createUserWithEmailAndPassword,
+  onIdTokenChanged,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signOut,
 } from 'firebase/auth';
+import { useCallback, useEffect, useState } from 'react';
 import { auth } from '../firebase';
+import { fetchApi, readJson } from '../utils/api';
+import { AuthContext } from './useAuth';
 
-const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Only set user if email is verified
-        if (firebaseUser.emailVerified) {
-          const idToken = await firebaseUser.getIdToken(true); // force refresh
-          
-          try {
-            // Fetch real role and username from the database
-            const res = await fetch(`${API_URL}/users/me`, {
-              headers: { 'Authorization': `Bearer ${idToken}` }
-            });
-            const dbUser = await res.json();
-            
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              username: dbUser.username || firebaseUser.email.split('@')[0],
-              role: dbUser.role || "user" 
-            });
-            setToken(idToken);
-          } catch (err) {
-             console.error("Failed to fetch user profile", err);
-             setUser(null);
-             setToken(null);
+    let active = true;
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser?.emailVerified) {
+          if (active) {
+            setUser(null);
+            setToken(null);
           }
-        } else {
+          return;
+        }
+
+        const idToken = await firebaseUser.getIdToken();
+        const profile = await readJson(await fetchApi('/users/me', {}, idToken));
+        if (active && auth.currentUser === firebaseUser) {
+          setUser({ ...profile, uid: firebaseUser.uid });
+          setToken(idToken);
+          setError(null);
+        }
+      } catch (err) {
+        if (active && auth.currentUser === firebaseUser) {
           setUser(null);
           setToken(null);
+          setError(err.message);
         }
-      } else {
-        setUser(null);
-        setToken(null);
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
-  const register = async (username, email, password, role = "user") => {
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    setUser(null);
+    setToken(null);
+  }, []);
+
+  const register = async (username, email, password, role = 'patient') => {
     setError(null);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Save role and username to the backend database before signing out
-      const tempToken = await userCredential.user.getIdToken();
-      await fetch(`${API_URL}/users/register`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
-        },
-        body: JSON.stringify({ role, username })
-      });
-
-      await sendEmailVerification(userCredential.user);
-      
-      // Sign out immediately so they have to verify email before logging in
-      await signOut(auth);
-      
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await firebaseUser.getIdToken();
+      await readJson(
+        await fetchApi(
+          '/users/register',
+          {
+            method: 'POST',
+            body: JSON.stringify({ role, username }),
+          },
+          idToken,
+        ),
+      );
+      await sendEmailVerification(firebaseUser);
+      await logout();
       return true;
     } catch (err) {
       setError(err.message);
@@ -89,79 +84,44 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setError(null);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      if (!userCredential.user.emailVerified) {
-        await signOut(auth);
+      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+      if (!firebaseUser.emailVerified) {
+        await logout();
         throw new Error('Please verify your email before logging in.');
       }
-      
       return true;
     } catch (err) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
-        setError('This user does not exist. Please signup.');
-      } else {
-        setError(err.message);
-      }
+      setError(
+        err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found'
+          ? 'This user does not exist. Please signup.'
+          : err.message,
+      );
       return false;
     }
   };
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error("Error signing out: ", err);
-    }
-  };
-
-  const authenticatedFetch = async (url, options = {}) => {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-    
-    if (auth.currentUser && auth.currentUser.emailVerified) {
+  // Keep this stable: screens depend on it when loading their data.
+  const authenticatedFetch = useCallback(
+    async (endpoint, options = {}) => {
+      if (!auth.currentUser?.emailVerified) {
+        throw new Error('Please log in with a verified email address.');
+      }
       const idToken = await auth.currentUser.getIdToken();
-      headers['Authorization'] = `Bearer ${idToken}`;
-    } else if (token) {
-       headers['Authorization'] = `Bearer ${token}`;
-    } else {
-       throw new Error('No valid authentication token found. Please login.');
-    }
-    
-    const response = await fetch(`${API_URL}${url}`, {
-      ...options,
-      headers,
-    });
-    
-    if (response.status === 401) {
-      await logout();
-      throw new Error('Session expired or unauthorized. Please log in again.');
-    }
-    
-    return response;
-  };
+      const response = await fetchApi(endpoint, options, idToken);
+      if (response.status === 401) {
+        await logout();
+        throw new Error('Session expired. Please log in again.');
+      }
+      return response;
+    },
+    [logout],
+  );
 
-  const value = {
-    user,
-    token,
-    loading,
-    error,
-    register,
-    login,
-    logout,
-    authenticatedFetch,
-    setError,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+  return (
+    <AuthContext.Provider
+      value={{ user, token, loading, error, register, login, logout, authenticatedFetch, setError }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}

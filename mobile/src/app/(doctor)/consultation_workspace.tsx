@@ -1,19 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Settings, Mic, Video, PhoneOff, AlertTriangle, Heart, Activity, Wind, FileText, ChevronRight, Plus, Calendar, History, Pill, MoreHorizontal } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  FileText,
+  Heart,
+  History,
+  Mic,
+  PhoneOff,
+  Pill,
+  Settings,
+  Video,
+  Wind,
+} from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Palette, Radius, Spacing } from '../../constants/theme';
+import { useAuth } from '../../context/useAuth';
 
 export default function ConsultationWorkspace() {
   const { authenticatedFetch } = useAuth();
   const { patientId } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('vitals');
   const [patient, setPatient] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const theme = isDark ? Colors.dark : Colors.light;
+
+  const accentColor = isDark ? Palette.sageLuminous : Palette.sagePrimary;
 
   useEffect(() => {
     if (!patientId) {
-      setLoading(false);
       return;
     }
     const fetchPatient = async () => {
@@ -22,131 +41,211 @@ export default function ConsultationWorkspace() {
         if (res.ok) {
           const data = await res.json();
           setPatient({
-            name: data.profile.name || 'Unknown',
-            age: data.profile.dob ? new Date().getFullYear() - new Date(data.profile.dob).getFullYear() : '--',
-            history: data.history.past_surgeries,
-            medications: data.history.chronic_conditions
+            name: data.profile.name || 'Patient',
+            age: data.profile.dob
+              ? new Date().getFullYear() - new Date(data.profile.dob).getFullYear()
+              : '--',
+            history: data.history.past_surgeries || [],
+            medications: data.history.chronic_conditions || [],
           });
         }
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchPatient();
   }, [patientId, authenticatedFetch]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.surface }]}
+      >
         <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <Text style={{color: '#FFF', fontWeight: 'bold'}}>AS</Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={22} color={theme.text} />
+          </TouchableOpacity>
+          <View style={[styles.avatar, { backgroundColor: Palette.sagePrimary }]}>
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>DR</Text>
           </View>
-          <Text style={styles.headerTitle}>Clinical Toolkit</Text>
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>Clinical Workspace</Text>
+            <Text style={[styles.headerSub, { color: theme.textSecondary }]}>
+              Ansaea Telehealth Engine
+            </Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.iconBtn}>
-          <Settings size={24} color="#94A3B8" />
+        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+          <Settings size={20} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        
-        <View style={styles.videoSection}>
+        {/* Video Consultation Banner */}
+        <View style={[styles.videoSection, { backgroundColor: Palette.surfaceDark1 }]}>
           <View style={styles.videoPlaceholder}>
-            <Text style={{color: 'rgba(255,255,255,0.2)'}}>Video Stream</Text>
+            <Video size={40} color={Palette.textDarkTertiary} style={{ marginBottom: 8 }} />
+            <Text style={{ color: Palette.textDarkSecondary, fontSize: 13 }}>
+              Encrypted Clinical Video Stream
+            </Text>
           </View>
-          
+
           <View style={styles.videoOverlayTop}>
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE 12:44</Text>
+              <Text style={styles.liveText}>LIVE SESSION</Text>
             </View>
           </View>
 
           <View style={styles.videoControls}>
-            <TouchableOpacity style={styles.controlBtn}><Mic size={20} color="#FFF" /></TouchableOpacity>
-            <TouchableOpacity style={styles.controlBtn}><Video size={20} color="#FFF" /></TouchableOpacity>
-            <TouchableOpacity style={[styles.controlBtn, {backgroundColor: '#ef4444'}]}><PhoneOff size={20} color="#FFF" /></TouchableOpacity>
+            <TouchableOpacity style={styles.controlBtn} activeOpacity={0.8}>
+              <Mic size={18} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.controlBtn} activeOpacity={0.8}>
+              <Video size={18} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.controlBtn, { backgroundColor: Palette.danger }]}
+              activeOpacity={0.8}
+              onPress={() => router.back()}
+            >
+              <PhoneOff size={18} color="#FFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.patientInfoBar}>
-          <View>
-            <Text style={styles.patientName}>{patient?.name || 'Patient'}, {patient?.age || '--'}</Text>
+        {/* Patient Identity Bar */}
+        <View
+          style={[
+            styles.patientInfoBar,
+            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.patientName, { color: theme.text }]}>
+              {patient?.name || 'Assigned Patient'}, {patient?.age || '--'} yrs
+            </Text>
             <View style={styles.rowCenter}>
-              <AlertTriangle size={14} color="#94A3B8" style={{marginRight: 4}} />
-              <Text style={styles.patientSub}>Chief Complaint: Chronic Lower Back Pain</Text>
+              <AlertTriangle size={13} color={Palette.warning} style={{ marginRight: 4 }} />
+              <Text style={[styles.patientSub, { color: theme.textSecondary }]}>
+                Chief Complaint: Chronic Pain Evaluation
+              </Text>
             </View>
           </View>
-          <View style={styles.sessionBadge}>
-            <Text style={styles.sessionText}>In Session</Text>
+          <View
+            style={[
+              styles.sessionBadge,
+              { backgroundColor: isDark ? 'rgba(64, 145, 108, 0.2)' : Palette.sageSubtle },
+            ]}
+          >
+            <Text style={[styles.sessionText, { color: accentColor }]}>In Consultation</Text>
           </View>
         </View>
 
-        <View style={styles.tabBar}>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'vitals' && styles.tabActive]}
-            onPress={() => setActiveTab('vitals')}
-          >
-            <Text style={[styles.tabText, activeTab === 'vitals' && styles.tabTextActive]}>Real-time Vitals</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'history' && styles.tabActive]}
-            onPress={() => setActiveTab('history')}
-          >
-            <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>Quick History</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'notes' && styles.tabActive]}
-            onPress={() => setActiveTab('notes')}
-          >
-            <Text style={[styles.tabText, activeTab === 'notes' && styles.tabTextActive]}>Active Notes</Text>
-          </TouchableOpacity>
+        {/* Workspace Tab Bar */}
+        <View
+          style={[
+            styles.tabBar,
+            { borderBottomColor: theme.border, backgroundColor: theme.surface },
+          ]}
+        >
+          {[
+            { id: 'vitals', label: 'Telemetry Vitals' },
+            { id: 'history', label: 'Patient Chart' },
+            { id: 'notes', label: 'SOAP Notes' },
+          ].map((t) => {
+            const isSel = activeTab === t.id;
+            return (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.tab, isSel && { borderBottomColor: accentColor }]}
+                onPress={() => setActiveTab(t.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    { color: isSel ? accentColor : theme.textSecondary },
+                    isSel && { fontWeight: '700' },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.tabContent}>
-          
           {activeTab === 'vitals' && (
             <View>
               <View style={styles.vitalsGrid}>
-                <View style={styles.vitalCard}>
+                <View
+                  style={[
+                    styles.vitalCard,
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                  ]}
+                >
                   <View style={styles.rowBetween}>
-                    <Heart size={20} color="#ef4444" />
-                    <Text style={styles.vitalLabel}>BPM</Text>
+                    <Heart size={18} color={Palette.danger} />
+                    <Text style={[styles.vitalLabel, { color: theme.textSecondary }]}>
+                      PULSE RATE
+                    </Text>
                   </View>
                   <View style={styles.vitalValRow}>
-                    <Text style={styles.vitalVal}>78</Text>
-                    <Text style={[styles.vitalSub, {color: '#10b981'}]}>Normal</Text>
+                    <Text style={[styles.vitalVal, { color: theme.text }]}>78</Text>
+                    <Text style={[styles.vitalSub, { color: Palette.success }]}>Normal</Text>
                   </View>
                 </View>
-                
-                <View style={styles.vitalCard}>
+
+                <View
+                  style={[
+                    styles.vitalCard,
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                  ]}
+                >
                   <View style={styles.rowBetween}>
-                    <Activity size={20} color="#0ea5e9" />
-                    <Text style={styles.vitalLabel}>SYS/DIA</Text>
+                    <Activity size={18} color={accentColor} />
+                    <Text style={[styles.vitalLabel, { color: theme.textSecondary }]}>
+                      BLOOD PRESSURE
+                    </Text>
                   </View>
                   <View style={styles.vitalValRow}>
-                    <Text style={styles.vitalVal}>118/76</Text>
+                    <Text style={[styles.vitalVal, { color: theme.text }]}>118/76</Text>
                   </View>
                   <View style={styles.rowCenter}>
-                    <View style={[styles.dot, {backgroundColor: '#10b981'}]} />
-                    <Text style={[styles.vitalSub, {color: '#10b981'}]}>Optimal</Text>
+                    <View style={[styles.dot, { backgroundColor: Palette.success }]} />
+                    <Text style={[styles.vitalSub, { color: Palette.success }]}>Normotensive</Text>
                   </View>
                 </View>
               </View>
 
-              <View style={styles.vitalRowCard}>
+              <View
+                style={[
+                  styles.vitalRowCard,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
                 <View style={styles.rowBetween}>
                   <View style={styles.rowCenter}>
-                    <Wind size={20} color="#8b5cf6" style={{marginRight: 8}} />
-                    <Text style={styles.vitalLabelBig}>SpO2 Saturation</Text>
+                    <Wind size={18} color={accentColor} style={{ marginRight: 8 }} />
+                    <Text style={[styles.vitalLabelBig, { color: theme.text }]}>
+                      SpO2 Blood Oxygen Saturation
+                    </Text>
                   </View>
-                  <Text style={styles.vitalValBig}>99%</Text>
+                  <Text style={[styles.vitalValBig, { color: theme.text }]}>99%</Text>
                 </View>
-                <View style={styles.barBg}>
-                  <View style={[styles.barFill, {width: '99%', backgroundColor: '#8b5cf6'}]} />
+                <View
+                  style={[
+                    styles.barBg,
+                    { backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2 },
+                  ]}
+                >
+                  <View style={[styles.barFill, { width: '99%', backgroundColor: accentColor }]} />
                 </View>
               </View>
             </View>
@@ -154,26 +253,76 @@ export default function ConsultationWorkspace() {
 
           {activeTab === 'history' && (
             <View>
-              <View style={styles.historyCard}>
-                <Text style={styles.historyTitle}>Past Conditions & Surgeries</Text>
-                
-                {patient?.history?.length === 0 && <Text style={{color: '#94A3B8'}}>No history found.</Text>}
-                {patient?.history?.map((item: any, idx: number) => (
-                  <View key={idx} style={styles.historyItem}>
-                    <View style={styles.historyIconBox}><History size={20} color="#94A3B8" /></View>
-                    <View>
-                      <Text style={styles.historyDate}>{item}</Text>
+              <View
+                style={[
+                  styles.historyCard,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
+                <Text style={[styles.historyTitle, { color: accentColor }]}>
+                  Past Diagnoses & Surgeries
+                </Text>
+
+                {!patient?.history || patient.history.length === 0 ? (
+                  <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+                    No major surgeries recorded in chart.
+                  </Text>
+                ) : (
+                  patient.history.map((item: any, idx: number) => (
+                    <View
+                      key={idx}
+                      style={[styles.historyItem, { borderBottomColor: theme.border }]}
+                    >
+                      <View
+                        style={[
+                          styles.historyIconBox,
+                          { backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2 },
+                        ]}
+                      >
+                        <History size={16} color={theme.textSecondary} />
+                      </View>
+                      <View>
+                        <Text style={[styles.historyDate, { color: theme.text }]}>
+                          {typeof item === 'string' ? item : item.name || 'Procedure'}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  ))
+                )}
               </View>
 
-              <View style={styles.historyCard}>
-                <Text style={styles.historyTitle}>Known Allergies</Text>
+              <View
+                style={[
+                  styles.historyCard,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
+                <Text style={[styles.historyTitle, { color: accentColor }]}>
+                  Allergies on Record
+                </Text>
                 <View style={styles.tagsRow}>
-                  <View style={styles.tagRed}><Text style={styles.tagRedText}>Penicillin</Text></View>
-                  <View style={styles.tagGray}><Text style={styles.tagGrayText}>Latex</Text></View>
-                  <View style={styles.tagGray}><Text style={styles.tagGrayText}>Tree Nuts</Text></View>
+                  <View
+                    style={[
+                      styles.tagRed,
+                      {
+                        backgroundColor: isDark ? 'rgba(193, 41, 46, 0.15)' : Palette.dangerSubtle,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.tagRedText, { color: Palette.danger }]}>
+                      Penicillin (Severe)
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.tagGray,
+                      { backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2 },
+                    ]}
+                  >
+                    <Text style={[styles.tagGrayText, { color: theme.textSecondary }]}>
+                      Latex (Mild)
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -181,145 +330,225 @@ export default function ConsultationWorkspace() {
 
           {activeTab === 'notes' && (
             <View>
-              <View style={styles.notesCard}>
-                <View style={styles.notesHeader}>
-                  <Text style={styles.notesTitle}>AI-Assisted Transcription</Text>
-                  <View style={[styles.liveDot, {backgroundColor: '#10b981'}]} />
+              <View
+                style={[
+                  styles.notesCard,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.notesHeader,
+                    { backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2 },
+                  ]}
+                >
+                  <Text style={[styles.notesTitle, { color: theme.textSecondary }]}>
+                    AI Real-Time Ambient Transcription
+                  </Text>
+                  <View style={[styles.liveDot, { backgroundColor: Palette.success }]} />
                 </View>
                 <View style={styles.notesBody}>
-                  <Text style={styles.notesText}>"Patient reports pain radiates down left leg... aggravated by sitting... relieved by lying flat..."</Text>
+                  <Text style={[styles.notesText, { color: theme.text }]}>
+                    "Patient reports chronic lumbar pain exacerbated by seated desk work, with
+                    gradual relief upon supine decompression. No radiation to extremities noted..."
+                  </Text>
                 </View>
               </View>
 
-              <Text style={styles.sectionTitle}>Medications / Scripts</Text>
-              
-              {patient?.medications?.length === 0 && <Text style={{color: '#94A3B8'}}>No active medications.</Text>}
-              {patient?.medications?.map((item: any, idx: number) => (
-                <View key={idx} style={[styles.rxCard, {marginBottom: 12}]}>
-                  <View style={styles.rowCenter}>
-                    <Pill size={24} color="#0ea5e9" style={{marginRight: 12}} />
-                    <View>
-                      <Text style={styles.rxName}>{item}</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: Spacing.two }}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: Palette.sagePrimary }]}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/clinical_notes' as any,
+                      params: { appointmentId: 'demo-appt' },
+                    })
+                  }
+                  activeOpacity={0.85}
+                >
+                  <FileText size={16} color="#FFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.actionBtnText}>Full SOAP Editor</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    {
+                      backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2,
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/eprescription' as any,
+                      params: { appointmentId: 'demo-appt', patientId },
+                    })
+                  }
+                  activeOpacity={0.85}
+                >
+                  <Pill size={16} color={accentColor} style={{ marginRight: 6 }} />
+                  <Text style={[styles.actionBtnText, { color: theme.text }]}>E-Prescription</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
-
         </View>
-
       </ScrollView>
-
-      <TouchableOpacity style={styles.fabAdd}>
-        <Plus size={24} color="#FFF" />
-        <Text style={styles.fabText}>Add Quick Note</Text>
-      </TouchableOpacity>
-
-      <View style={styles.bottomNav}>
-        <View style={styles.navItem}>
-          <View style={styles.navIconActive}><Video size={20} color="#FFF" /></View>
-          <Text style={styles.navText}>Consult</Text>
-        </View>
-        <View style={styles.navItem}>
-          <FileText size={20} color="#94A3B8" />
-          <Text style={styles.navText}>Notes</Text>
-        </View>
-        <View style={styles.navItem}>
-          <Activity size={20} color="#94A3B8" />
-          <Text style={styles.navText}>Diagnosis</Text>
-        </View>
-        <View style={styles.navItem}>
-          <Pill size={20} color="#94A3B8" />
-          <Text style={styles.navText}>Scripts</Text>
-        </View>
-        <View style={styles.navItem}>
-          <MoreHorizontal size={20} color="#94A3B8" />
-          <Text style={styles.navText}>More</Text>
-        </View>
-      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#1E293B', backgroundColor: '#0F172A' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#0ea5e9' },
-  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  
-  scroll: { paddingBottom: 160 },
-  
-  videoSection: { height: 240, backgroundColor: '#1E293B', position: 'relative' },
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: 1,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  backBtn: { width: 36, height: 36, justifyContent: 'center' },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 16, fontWeight: '700' },
+  headerSub: { fontSize: 11 },
+  iconBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  scroll: { paddingBottom: 60 },
+  videoSection: { height: 210, position: 'relative' },
   videoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  videoOverlayTop: { position: 'absolute', top: 16, right: 16 },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444', marginRight: 6 },
-  liveText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  videoControls: { position: 'absolute', bottom: 16, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 16 },
-  controlBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
-
-  patientInfoBar: { padding: 16, backgroundColor: '#1E293B', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  patientName: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 4 },
+  videoOverlayTop: { position: 'absolute', top: 12, right: 12 },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Palette.danger,
+    marginRight: 6,
+  },
+  liveText: { color: '#FFF', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  videoControls: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  controlBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  patientInfoBar: {
+    padding: Spacing.four,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+  },
+  patientName: { fontSize: 17, fontWeight: '700', marginBottom: 2 },
   rowCenter: { flexDirection: 'row', alignItems: 'center' },
-  patientSub: { fontSize: 12, color: '#94A3B8' },
-  sessionBadge: { backgroundColor: 'rgba(16, 185, 129, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)' },
-  sessionText: { color: '#10b981', fontSize: 12, fontWeight: 'bold' },
-
-  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#1E293B', backgroundColor: '#0F172A' },
-  tab: { flex: 1, paddingVertical: 16, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: '#0ea5e9' },
-  tabText: { color: '#94A3B8', fontWeight: 'bold', fontSize: 13 },
-  tabTextActive: { color: '#0ea5e9' },
-
-  tabContent: { padding: 16 },
-  
-  vitalsGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  vitalCard: { flex: 1, backgroundColor: '#1E293B', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' },
+  patientSub: { fontSize: 12 },
+  sessionBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full },
+  sessionText: { fontSize: 11, fontWeight: '700' },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1 },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: { fontSize: 13, fontWeight: '600' },
+  tabContent: { padding: Spacing.four },
+  vitalsGrid: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  vitalCard: { flex: 1, borderRadius: Radius.lg, padding: Spacing.four, borderWidth: 1 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  vitalLabel: { fontSize: 12, color: '#94A3B8', fontWeight: 'bold' },
-  vitalValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 12, marginBottom: 4 },
-  vitalVal: { fontSize: 24, fontWeight: 'bold', color: '#F8FAFC' },
-  vitalSub: { fontSize: 10, fontWeight: 'bold', marginLeft: 4 },
+  vitalLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  vitalValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 10, marginBottom: 4 },
+  vitalVal: { fontSize: 24, fontWeight: '800' },
+  vitalSub: { fontSize: 11, fontWeight: '700', marginLeft: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, marginRight: 4 },
-
-  vitalRowCard: { backgroundColor: '#1E293B', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155', marginBottom: 12 },
-  vitalLabelBig: { fontSize: 14, fontWeight: 'bold', color: '#F8FAFC' },
-  vitalValBig: { fontSize: 16, fontWeight: 'bold', color: '#F8FAFC' },
-  barBg: { height: 8, backgroundColor: '#334155', borderRadius: 4, marginTop: 12, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 4 },
-
-  historyCard: { backgroundColor: '#1E293B', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155', marginBottom: 16 },
-  historyTitle: { fontSize: 14, fontWeight: 'bold', color: '#0ea5e9', marginBottom: 16 },
-  historyItem: { flexDirection: 'row', alignItems: 'flex-start', paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#334155', marginBottom: 12 },
-  historyIconBox: { padding: 8, backgroundColor: '#334155', borderRadius: 8, marginRight: 12 },
-  historyDate: { fontSize: 14, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 4 },
-  historyDesc: { fontSize: 12, color: '#94A3B8' },
-
+  vitalRowCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  vitalLabelBig: { fontSize: 13, fontWeight: '600' },
+  vitalValBig: { fontSize: 16, fontWeight: '700' },
+  barBg: { height: 6, borderRadius: 3, marginTop: 10, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 3 },
+  historyCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    borderWidth: 1,
+    marginBottom: Spacing.three,
+  },
+  historyTitle: { fontSize: 14, fontWeight: '700', marginBottom: Spacing.three },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  historyIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  historyDate: { fontSize: 13, fontWeight: '600' },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tagRed: { backgroundColor: 'rgba(239, 68, 68, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  tagRedText: { color: '#ef4444', fontSize: 12, fontWeight: 'bold' },
-  tagGray: { backgroundColor: '#334155', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  tagGrayText: { color: '#F8FAFC', fontSize: 12, fontWeight: 'bold' },
-
-  notesCard: { backgroundColor: '#1E293B', borderRadius: 16, borderWidth: 1, borderColor: '#334155', overflow: 'hidden', marginBottom: 24 },
-  notesHeader: { backgroundColor: '#334155', paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  notesTitle: { fontSize: 12, color: '#94A3B8' },
-  notesBody: { padding: 16, minHeight: 120 },
-  notesText: { fontSize: 14, color: '#F8FAFC', fontStyle: 'italic', lineHeight: 22 },
-
-  sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#94A3B8', marginBottom: 8, marginLeft: 4 },
-  rxCard: { backgroundColor: '#1E293B', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rxName: { fontSize: 16, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 4 },
-  rxSub: { fontSize: 12, color: '#94A3B8' },
-
-  fabAdd: { position: 'absolute', bottom: 100, right: 16, backgroundColor: '#0ea5e9', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, height: 56, borderRadius: 28, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4 },
-  fabText: { color: '#FFF', fontWeight: 'bold', marginLeft: 8 },
-
-  bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, backgroundColor: '#0F172A', borderTopWidth: 1, borderTopColor: '#1E293B', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingBottom: 16 },
-  navItem: { alignItems: 'center', justifyContent: 'center' },
-  navIconActive: { backgroundColor: 'rgba(14, 165, 233, 0.2)', paddingHorizontal: 16, paddingVertical: 4, borderRadius: 16, marginBottom: 4 },
-  navText: { fontSize: 10, color: '#94A3B8', marginTop: 4 }
+  tagRed: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.sm },
+  tagRedText: { fontSize: 12, fontWeight: '700' },
+  tagGray: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.sm },
+  tagGrayText: { fontSize: 12, fontWeight: '600' },
+  notesCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: Spacing.four,
+  },
+  notesHeader: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notesTitle: { fontSize: 12, fontWeight: '600' },
+  notesBody: { padding: Spacing.four, minHeight: 90 },
+  notesText: { fontSize: 14, fontStyle: 'italic', lineHeight: 20 },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+  },
+  actionBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
 });

@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LogOut } from 'lucide-react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -31,9 +30,24 @@ const styles = StyleSheet.create({
   header: { padding: 20 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#F8FAFC' },
   content: { padding: 20 },
-  card: { backgroundColor: '#1E293B', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#334155', marginBottom: 24 },
+  card: {
+    backgroundColor: '#1E293B',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginBottom: 24,
+  },
   name: { fontSize: 20, fontWeight: 'bold', color: '#F8FAFC' },
   email: { color: '#94A3B8', marginTop: 4 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 12 },
-  logoutText: { color: '#ef4444', fontWeight: '600', fontSize: 16 }
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 12,
+  },
+  logoutText: { color: '#ef4444', fontWeight: '600', fontSize: 16 },
 });

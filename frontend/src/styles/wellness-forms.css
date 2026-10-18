@@ -1,0 +1,199 @@
+/* ── Breathing Exercise ─────────────────────────────────────── */
+.breath-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+.breath-circle-outer {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-6) auto;
+  position: relative;
+}
+
+.breath-circle-inner {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  transition:
+    transform 3.8s cubic-bezier(0.4, 0, 0.2, 1),
+    background 1.5s ease,
+    border-color 1.5s ease,
+    box-shadow 2s ease;
+}
+
+.breath-circle-inner.inhale {
+  transform: scale(1.35);
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  box-shadow: 0 0 32px rgba(45, 106, 79, 0.2);
+  color: var(--accent-text);
+}
+
+.breath-circle-inner.hold {
+  transform: scale(1.35);
+  background: var(--status-info-subtle);
+  border-color: var(--status-info);
+  box-shadow: 0 0 32px rgba(69, 123, 157, 0.2);
+  color: var(--status-info);
+}
+
+.breath-circle-inner.exhale {
+  transform: scale(1);
+  background: var(--surface-2);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+/* ── CBT Cognitive Reframing ────────────────────────────────── */
+.cbt-steps-tracker {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.cbt-steps-tracker::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.cbt-step-node {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 2;
+  transition: all 200ms var(--ease-out);
+  color: var(--text-secondary);
+}
+
+.cbt-step-node.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.cbt-step-node.completed {
+  background: var(--status-success);
+  border-color: var(--status-success);
+  color: var(--text-inverse);
+}
+
+.distortion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.distortion-pill {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 150ms var(--ease-out);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.distortion-pill:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+}
+
+.distortion-pill.selected {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* ── Habit Tracker ──────────────────────────────────────────── */
+.habit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+  transition: all 150ms var(--ease-out);
+}
+
+.habit-row:hover {
+  background: var(--surface-2);
+  border-color: var(--border-hover);
+}
+
+.habit-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms var(--ease-out);
+  background: var(--surface-0);
+}
+
+.habit-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-inverse);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .stagger-item {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}

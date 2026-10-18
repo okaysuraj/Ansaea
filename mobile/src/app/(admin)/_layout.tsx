@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
+import { LayoutDashboard } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
-import { LayoutDashboard, Users, Activity, Settings } from 'lucide-react-native';
 
 export default function AdminLayout() {
   const colorScheme = useColorScheme();

@@ -1,109 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Calendar, DollarSign, Award, Star } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Award, Calendar, Search, Star } from 'lucide-react';
+import { useState } from 'react';
+import { useApiData } from '../hooks/useApiData';
 import AppointmentScheduler from './AppointmentScheduler';
 
 export default function PsychiatristDirectory({ onBookingSuccess }) {
-  const { authenticatedFetch } = useAuth();
-  const [doctors, setDoctors] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  const fetchDoctors = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const response = await authenticatedFetch('/psychiatrists');
-      const data = await response.json();
-      if (response.ok) {
-        setDoctors(data);
-      } else {
-        setError('Unable to fetch psychiatrist list');
-      }
-    } catch (err) {
-      setError(err.message || 'Database error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: doctors, loading: isLoading, error } = useApiData('/psychiatrists', []);
 
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
-
-  const filteredDoctors = doctors.filter((doc) =>
-    doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.specialty.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDoctors = doctors.filter(
+    (doc) =>
+      (doc.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.specialty || '').toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+      {/* Top filter bar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)',
+        }}
+      >
         <div>
-          <h3>Professional Wellness Experts</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Book direct chat, voice, or video therapy slots with medical professionals.</p>
+          <span className="text-label" style={{ display: 'block', marginBottom: 'var(--space-1)' }}>
+            Specialist Network
+          </span>
+          <h2>Licensed Mental Health Clinicians</h2>
+          <p style={{ marginTop: 'var(--space-1)' }}>
+            Connect with board-certified psychiatrists and psychologists for confidential video or
+            chat sessions.
+          </p>
         </div>
-        
+
         {/* Search Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)', borderRadius: '12px', padding: '0.5rem 1rem', width: '320px', gap: '0.5rem' }}>
-          <Search size={18} style={{ color: 'var(--text-dim)' }} />
+        <div style={{ position: 'relative', width: '320px', maxWidth: '100%' }}>
+          <Search
+            size={16}
+            style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--text-tertiary)',
+            }}
+          />
           <input
             type="text"
             placeholder="Search by name or specialty..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%', fontSize: '0.9rem' }}
+            className="form-input"
+            style={{ paddingLeft: '2.5rem' }}
           />
         </div>
       </div>
 
       {error && (
-        <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.5rem', color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+        <div
+          className="badge badge-danger"
+          style={{
+            width: '100%',
+            padding: 'var(--space-3)',
+            marginBottom: 'var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
           {error}
         </div>
       )}
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Contacting Ansaea directory registry...</div>
+        <div className="empty-state">
+          <div className="empty-state-title">Loading clinical registry...</div>
+          <div className="empty-state-desc">
+            Fetching available board-certified professionals and slots.
+          </div>
+        </div>
       ) : filteredDoctors.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No doctors match your query. Try broadening your terms.</div>
+        <div className="empty-state">
+          <div className="empty-state-title">No specialists matched</div>
+          <div className="empty-state-desc">
+            Try clearing your search query or selecting a different specialty.
+          </div>
+        </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: 'var(--space-6)',
+          }}
+        >
           {filteredDoctors.map((doc) => (
-            <div key={doc.id} className="glass-panel doctor-card">
-              <img src={doc.imageUrl} alt={doc.name} className="doctor-img" />
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'var(--color-primary-glow)', color: '#a5b4fc', textTransform: 'uppercase' }}>
-                  {doc.specialty}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-warning)' }}>
-                  <Star size={14} fill="currentColor" /> {doc.rating}
-                </span>
+            <div
+              key={doc.id}
+              className="card card-padding"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 'var(--space-4)',
+                  alignItems: 'center',
+                  marginBottom: 'var(--space-4)',
+                }}
+              >
+                <img
+                  src={doc.imageUrl}
+                  alt={doc.name}
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: 'var(--radius-avatar)',
+                    objectFit: 'cover',
+                    border: '1px solid var(--border)',
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
+                    <span className="badge badge-accent">{doc.specialty}</span>
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '0.8125rem',
+                        fontWeight: '600',
+                        color: 'var(--status-warning)',
+                      }}
+                    >
+                      <Star size={13} fill="currentColor" /> {doc.rating || '5.0'}
+                    </span>
+                  </div>
+                  <h4 style={{ margin: 0 }}>{doc.name}</h4>
+                </div>
               </div>
 
-              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', marginBottom: '0.75rem' }}>{doc.name}</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: '1.45', flex: 1, marginBottom: '1.25rem' }}>
+              <p
+                className="text-caption"
+                style={{ flex: 1, marginBottom: 'var(--space-4)', lineHeight: '1.5' }}
+              >
                 {doc.bio}
               </p>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-glass)', paddingTop: '1rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Award size={16} /> {doc.experience_years} Years
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 'var(--space-3) 0',
+                  borderTop: '1px solid var(--border)',
+                  borderBottom: '1px solid var(--border)',
+                  marginBottom: 'var(--space-4)',
+                  fontSize: '0.8125rem',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-1)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  <Award size={15} style={{ color: 'var(--accent)' }} /> {doc.experience_years} yrs
+                  exp.
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-primary)', fontWeight: '600' }}>
-                  <DollarSign size={16} /> {doc.session_price} / hr
+                <span
+                  className="text-mono"
+                  style={{ fontWeight: '600', color: 'var(--text-primary)' }}
+                >
+                  ${doc.session_price} / session
                 </span>
               </div>
 
               <button
+                type="button"
                 onClick={() => setSelectedDoctor(doc)}
-                className="btn-submit"
-                style={{ marginTop: 0 }}
+                className="btn btn-primary btn-full"
               >
-                Schedule Session
+                <Calendar size={15} /> Schedule Consultation
               </button>
             </div>
           ))}

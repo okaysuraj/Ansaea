@@ -1,22 +1,23 @@
 import { Tabs } from 'expo-router';
+import { Calendar, LayoutDashboard, Search, User } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
-import { LayoutDashboard, Search, Calendar, User } from 'lucide-react-native';
+import { Palette } from '../../constants/theme';
 
 export default function PatientLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const activeColor = isDark ? '#38bdf8' : '#0ea5e9';
+  const activeColor = isDark ? Palette.sageLuminous : Palette.sagePrimary;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? '#0F172A' : '#ffffff',
-          borderTopColor: isDark ? '#334155' : '#e2e8f0',
+          backgroundColor: isDark ? Palette.surfaceDark0 : Palette.surfaceWarm0,
+          borderTopColor: isDark ? Palette.borderDark : Palette.borderWarm,
         },
         tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: isDark ? '#94a3b8' : '#64748b',
+        tabBarInactiveTintColor: isDark ? Palette.textDarkSecondary : Palette.textWarmSecondary,
       }}
     >
       <Tabs.Screen
@@ -47,6 +48,11 @@ export default function PatientLayout() {
           tabBarIcon: ({ color }) => <User size={24} color={color} />,
         }}
       />
+
+      {/* Hide nested group routes from appearing as tabs */}
+      <Tabs.Screen name="(appointments)" options={{ href: null }} />
+      <Tabs.Screen name="(metrics)" options={{ href: null }} />
+      <Tabs.Screen name="(profile)" options={{ href: null }} />
     </Tabs>
   );
 }

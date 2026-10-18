@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Camera, Shield, FileText, Lock, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Camera, Check, Lock, Shield } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../context/AuthContext';
+import { Colors, Palette, Radius, Spacing } from '../../../constants/theme';
+import { useAuth } from '../../../context/useAuth';
 
 export default function EditProfile() {
   const { user, authenticatedFetch } = useAuth();
-  
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const theme = isDark ? Colors.dark : Colors.light;
+
   const [formData, setFormData] = useState({
     full_name: '',
     email: user?.email || '',
     phone_number: '',
-    dob: ''
+    dob: '',
   });
-  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   React.useEffect(() => {
     const fetchProfile = async () => {
@@ -26,13 +41,11 @@ export default function EditProfile() {
             full_name: data.full_name || user?.username || '',
             email: user?.email || '',
             phone_number: data.phone_number || '',
-            dob: data.dob || ''
+            dob: data.dob || '',
           });
         }
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchProfile();
@@ -43,157 +56,220 @@ export default function EditProfile() {
   };
 
   const handleSubmit = async () => {
+    setSaving(true);
     try {
       const res = await authenticatedFetch('/api/patients/profile', {
         method: 'PUT',
         body: JSON.stringify({
           full_name: formData.full_name,
           dob: formData.dob,
-          phone_number: formData.phone_number
-        })
+          phone_number: formData.phone_number,
+        }),
       });
       if (res.ok) {
-        alert('Profile updated successfully!');
+        Alert.alert('Success', 'Profile details saved successfully.');
         router.back();
+      } else {
+        Alert.alert('Error', 'Unable to update profile.');
       }
     } catch (err) {
       console.error(err);
-      alert('Error updating profile');
+      Alert.alert('Error', 'Network request failed.');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color="#F8FAFC" />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.surface }]}
+      >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <ArrowLeft size={22} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Personal Profile</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
-          
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarWrapper}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{user?.username?.substring(0,2).toUpperCase() || 'U'}</Text>
+              <View
+                style={[
+                  styles.avatar,
+                  {
+                    backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.avatarText, { color: theme.text }]}>
+                  {user?.username?.substring(0, 2).toUpperCase() || 'P'}
+                </Text>
               </View>
-              <TouchableOpacity style={styles.cameraBtn}>
-                <Camera size={18} color="#fff" />
+              <TouchableOpacity
+                style={[
+                  styles.cameraBtn,
+                  { backgroundColor: Palette.sagePrimary, borderColor: theme.background },
+                ]}
+                activeOpacity={0.85}
+              >
+                <Camera size={16} color="#fff" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.name}>{user?.username}</Text>
-            <Text style={styles.subtext}>Patient Member</Text>
+            <Text style={[styles.name, { color: theme.text }]}>
+              {formData.full_name || user?.username}
+            </Text>
+            <Text style={[styles.subtext, { color: theme.textSecondary }]}>
+              Ansaea Patient Member
+            </Text>
           </View>
 
           {/* Verification Badge */}
-          <View style={styles.verificationCard}>
+          <View
+            style={[
+              styles.verificationCard,
+              {
+                backgroundColor: isDark ? 'rgba(64, 145, 108, 0.15)' : Palette.sageSubtle,
+                borderColor: Palette.success,
+              },
+            ]}
+          >
             <View style={styles.verificationHeader}>
-              <Shield size={20} color="#10b981" />
-              <Text style={styles.verificationTitle}>Verified Profile</Text>
+              <Shield size={18} color={Palette.success} />
+              <Text
+                style={[
+                  styles.verificationTitle,
+                  { color: isDark ? Palette.sageLuminous : Palette.sageDark },
+                ]}
+              >
+                Verified Identity Chart
+              </Text>
             </View>
-            <Text style={styles.verificationDesc}>
-              Your identity was verified securely. This allows access to shared medical records.
+            <Text
+              style={[
+                styles.verificationDesc,
+                { color: isDark ? Palette.textDarkSecondary : Palette.sageDark },
+              ]}
+            >
+              Your clinical identity and government identifiers have been cryptographically verified
+              for secure electronic prescriptions and medical record access.
             </Text>
           </View>
 
           {/* Personal Info Form */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Personal Information</Text>
+
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput 
-                style={styles.input} 
-                value={formData.full_name} 
-                onChangeText={(t) => handleChange('full_name', t)} 
-                placeholderTextColor="#64748b"
+              <Text style={[styles.label, { color: theme.textSecondary }]}>Full Legal Name</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.surface, color: theme.text, borderColor: theme.border },
+                ]}
+                value={formData.full_name}
+                onChangeText={(t) => handleChange('full_name', t)}
+                placeholderTextColor={theme.textTertiary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Date of Birth</Text>
-              <View style={styles.inputWithIcon}>
-                <TextInput 
-                  style={[styles.input, { flex: 1, borderWidth: 0 }]} 
-                  value={formData.dob} 
-                  onChangeText={(t) => handleChange('dob', t)} 
-                  placeholder="MM / DD / YYYY"
-                  placeholderTextColor="#64748b"
+              <Text style={[styles.label, { color: theme.textSecondary }]}>Date of Birth</Text>
+              <View
+                style={[
+                  styles.inputWithIcon,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
+                <TextInput
+                  style={[styles.inputInner, { color: theme.text }]}
+                  value={formData.dob}
+                  onChangeText={(t) => handleChange('dob', t)}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={theme.textTertiary}
                 />
-                <Calendar size={20} color="#64748b" style={{ marginRight: 12 }} />
+                <Calendar size={18} color={theme.textTertiary} style={{ marginRight: 14 }} />
               </View>
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <TextInput 
-                style={styles.input} 
-                value={formData.email} 
-                onChangeText={(t) => handleChange('email', t)} 
-                keyboardType="email-address"
-                placeholderTextColor="#64748b"
+              <Text style={[styles.label, { color: theme.textSecondary }]}>
+                Email Address (Read-only)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2,
+                    color: theme.textSecondary,
+                    borderColor: theme.border,
+                  },
+                ]}
+                value={formData.email}
                 editable={false}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput 
-                style={styles.input} 
-                value={formData.phone_number} 
-                onChangeText={(t) => handleChange('phone_number', t)} 
+              <Text style={[styles.label, { color: theme.textSecondary }]}>
+                Contact Phone Number
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.surface, color: theme.text, borderColor: theme.border },
+                ]}
+                value={formData.phone_number}
+                onChangeText={(t) => handleChange('phone_number', t)}
                 keyboardType="phone-pad"
                 placeholder="+1 (555) 000-0000"
-                placeholderTextColor="#64748b"
+                placeholderTextColor={theme.textTertiary}
               />
             </View>
           </View>
 
           {/* Privacy Note */}
-          <View style={styles.privacyCard}>
-            <View style={styles.privacyIconWrapper}>
-              <Lock size={20} color="#0ea5e9" />
+          <View
+            style={[
+              styles.privacyCard,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}
+          >
+            <View
+              style={[
+                styles.privacyIconWrapper,
+                { backgroundColor: isDark ? 'rgba(45, 106, 79, 0.25)' : Palette.sageSubtle },
+              ]}
+            >
+              <Lock size={18} color={isDark ? Palette.sageLuminous : Palette.sagePrimary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.privacyTitle}>HIPAA Compliance</Text>
-              <Text style={styles.privacyDesc}>
-                Your data is encrypted and securely stored. We never share contact info.
+              <Text style={[styles.privacyTitle, { color: theme.text }]}>HIPAA & Data Privacy</Text>
+              <Text style={[styles.privacyDesc, { color: theme.textSecondary }]}>
+                Your health data is protected with 256-bit encryption. Ansaea never monetizes or
+                shares your private medical history.
               </Text>
             </View>
           </View>
 
-          {/* Security & Consent Links */}
-          <TouchableOpacity style={styles.linkRow}>
-            <View style={[styles.linkIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <Shield size={20} color="#10b981" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.linkTitle}>Two-Factor Auth</Text>
-              <Text style={[styles.linkSubtext, { color: '#10b981' }]}>Enabled</Text>
-            </View>
+          <TouchableOpacity
+            style={[styles.submitBtn, { backgroundColor: Palette.sagePrimary }]}
+            onPress={handleSubmit}
+            disabled={saving}
+            activeOpacity={0.85}
+          >
+            <Check size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.submitBtnText}>
+              {saving ? 'Saving...' : 'Save Profile Changes'}
+            </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.linkRow}>
-            <View style={[styles.linkIconWrapper, { backgroundColor: 'rgba(168, 85, 247, 0.1)' }]}>
-              <FileText size={20} color="#a855f7" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.linkTitle}>Legal Consent</Text>
-              <Text style={styles.linkSubtext}>4 Active Forms</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-            <Text style={styles.submitBtnText}>Save Changes</Text>
-          </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -201,36 +277,93 @@ export default function EditProfile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#1E293B' },
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.four,
+    borderBottomWidth: 1,
+  },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC' },
-  scroll: { padding: 20, paddingBottom: 40 },
-  avatarSection: { alignItems: 'center', marginBottom: 24 },
-  avatarWrapper: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#334155', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#1E293B' },
-  avatarText: { fontSize: 36, color: '#94A3B8', fontWeight: 'bold' },
-  cameraBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#0ea5e9', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#0F172A' },
-  name: { fontSize: 22, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 4 },
-  subtext: { fontSize: 14, color: '#94A3B8' },
-  verificationCard: { backgroundColor: 'rgba(16, 185, 129, 0.05)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.2)', marginBottom: 24 },
-  verificationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  verificationTitle: { fontSize: 16, fontWeight: 'bold', color: '#10b981' },
-  verificationDesc: { fontSize: 14, color: '#94A3B8', lineHeight: 20 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 16 },
-  formGroup: { marginBottom: 16 },
-  label: { fontSize: 14, color: '#94A3B8', marginBottom: 8 },
-  input: { backgroundColor: '#1E293B', color: '#F8FAFC', paddingHorizontal: 16, height: 50, borderRadius: 10, fontSize: 16 },
-  inputWithIcon: { backgroundColor: '#1E293B', borderRadius: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'transparent' },
-  privacyCard: { backgroundColor: '#1E293B', padding: 16, borderRadius: 12, flexDirection: 'row', gap: 16, marginBottom: 24 },
-  privacyIconWrapper: { backgroundColor: 'rgba(14, 165, 233, 0.1)', padding: 10, borderRadius: 8, height: 40 },
-  privacyTitle: { fontSize: 16, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 4 },
-  privacyDesc: { fontSize: 14, color: '#94A3B8', lineHeight: 20 },
-  linkRow: { backgroundColor: '#1E293B', padding: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12 },
-  linkIconWrapper: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  linkTitle: { fontSize: 16, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 2 },
-  linkSubtext: { fontSize: 12, color: '#94A3B8' },
-  submitBtn: { backgroundColor: '#0ea5e9', height: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+  headerTitle: { fontSize: 18, fontWeight: '700' },
+  scroll: { padding: Spacing.four, paddingBottom: 60 },
+  avatarSection: { alignItems: 'center', marginBottom: Spacing.five },
+  avatarWrapper: { position: 'relative', marginBottom: Spacing.three },
+  avatar: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  avatarText: { fontSize: 32, fontWeight: '700' },
+  cameraBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  name: { fontSize: 20, fontWeight: '700', marginBottom: 2 },
+  subtext: { fontSize: 13 },
+  verificationCard: {
+    padding: Spacing.four,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.five,
+  },
+  verificationHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  verificationTitle: { fontSize: 14, fontWeight: '700' },
+  verificationDesc: { fontSize: 13, lineHeight: 18 },
+  section: { marginBottom: Spacing.five },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: Spacing.four },
+  formGroup: { marginBottom: Spacing.four },
+  label: { fontSize: 13, marginBottom: 6, fontWeight: '600' },
+  input: {
+    height: 48,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.four,
+    fontSize: 15,
+    borderWidth: 1,
+  },
+  inputWithIcon: {
+    height: 48,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  inputInner: { flex: 1, height: '100%', paddingHorizontal: Spacing.four, fontSize: 15 },
+  privacyCard: {
+    padding: Spacing.four,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: Spacing.three,
+    marginBottom: Spacing.five,
+  },
+  privacyIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  privacyTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  privacyDesc: { fontSize: 12, lineHeight: 17 },
+  submitBtn: {
+    flexDirection: 'row',
+    height: 50,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

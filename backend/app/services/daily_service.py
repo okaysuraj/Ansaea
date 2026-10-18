@@ -1,45 +1,41 @@
+"""Create consultation rooms, with a configurable local development fallback."""
+
 import os
-import requests
-import json
 import uuid
-from datetime import datetime
+
+import httpx
+
 
 class DailyService:
     def __init__(self):
         self.api_key = os.getenv("DAILY_API_KEY")
         self.base_url = "https://api.daily.co/v1"
 
-    def create_room(self, room_name: str = None) -> dict:
+    async def create_room(self, room_name: str | None = None) -> dict:
+        name = room_name or f"ansaea-{uuid.uuid4().hex[:8]}"
         if not self.api_key:
-            # Fallback for dev mode without API key
             return {
-                "url": f"https://video.ansaea.co/{room_name or uuid.uuid4().hex}",
-                "name": room_name or uuid.uuid4().hex,
-                "api_created": True,
-                "privacy": "public"
+                "url": os.getenv("VIDEO_FALLBACK_URL") or f"https://meet.jit.si/{name}",
+                "name": name,
+                "api_created": False,
+                "privacy": "public",
             }
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        
-        payload = {
-            "properties": {
-                "enable_chat": True,
-                "start_audio_off": False,
-                "start_video_off": False
-            }
-        }
-        
-        if room_name:
-            payload["name"] = room_name
 
-        response = requests.post(f"{self.base_url}/rooms", headers=headers, json=payload)
-        
-        if response.status_code == 200:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                f"{self.base_url}/rooms",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json={
+                    "name": name,
+                    "properties": {
+                        "enable_chat": True,
+                        "start_audio_off": False,
+                        "start_video_off": False,
+                    },
+                },
+            )
+            response.raise_for_status()
             return response.json()
-        else:
-            return {"error": response.text}
+
 
 daily_service = DailyService()

@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
+import { LayoutDashboard } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
-import { LayoutDashboard, FlaskConical, ClipboardList } from 'lucide-react-native';
 
 export default function LabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const activeColor = '#0ea5e9'; 
+  const activeColor = '#0ea5e9';
 
   return (
     <Tabs

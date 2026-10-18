@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { ShieldCheck } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldAlert } from 'lucide-react';
 
 export default function OtpVerification() {
   const navigate = useNavigate();
@@ -15,12 +15,11 @@ export default function OtpVerification() {
   const handleChange = (index, e) => {
     const value = e.target.value;
     if (isNaN(value)) return;
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto-focus next input
     if (value !== '' && index < 5) {
       inputRefs.current[index + 1].focus();
     }
@@ -43,71 +42,48 @@ export default function OtpVerification() {
   };
 
   return (
-    <div className="auth-premium-wrapper">
-      <div className="auth-premium-card">
-        <div className="auth-header">
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-7)' }}>
           <div className="auth-logo-box">
-            <ShieldAlert size={32} />
+            <ShieldCheck size={28} />
           </div>
-          <h1 className="auth-title">Verify Identity</h1>
-          <p className="auth-subtitle">Enter the 6-digit code sent to your email</p>
+          <h1 className="auth-title">Verify your identity</h1>
+          <p className="auth-subtitle" style={{ marginBottom: 0 }}>
+            Enter the 6-digit code sent to your email
+          </p>
         </div>
 
         <div className="otp-container">
           {otp.map((digit, index) => (
             <input
               key={index}
-              ref={el => inputRefs.current[index] = el}
+              ref={(el) => (inputRefs.current[index] = el)}
               className="otp-input"
               type="text"
               maxLength={1}
               value={digit}
-              onChange={e => handleChange(index, e)}
-              onKeyDown={e => handleKeyDown(index, e)}
+              onChange={(e) => handleChange(index, e)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              inputMode="numeric"
+              autoComplete="one-time-code"
             />
           ))}
         </div>
 
-        <button 
-          className="btn-primary-auth" 
+        <button
+          className="btn-primary-auth"
           onClick={handleVerify}
           disabled={otp.join('').length < 6 || loading}
-          style={{ marginTop: '2rem' }}
+          style={{ marginTop: 'var(--space-6)' }}
         >
-          {loading ? 'Verifying...' : 'Verify Code'}
+          {loading ? 'Verifying...' : 'Verify code'}
         </button>
-        
+
         <div className="auth-footer">
-          Didn't receive code? <span className="auth-link">Resend</span>
+          No code received? <span className="auth-link">Resend</span>
         </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        .otp-container {
-          display: flex;
-          gap: 0.5rem;
-          justify-content: center;
-          margin-top: 1.5rem;
-        }
-        .otp-input {
-          width: 50px;
-          height: 60px;
-          border-radius: 12px;
-          border: 1px solid #e5e5e5;
-          background: #fafafa;
-          font-size: 1.5rem;
-          font-weight: 700;
-          text-align: center;
-          color: #111;
-          transition: all 0.2s;
-        }
-        .otp-input:focus {
-          outline: none;
-          border-color: #000;
-          background: #fff;
-          box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
-        }
-      `}} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -10,52 +10,58 @@ export default function ForgotPassword() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
-    // Real implementation would call auth API
     setTimeout(() => {
       navigate('/login');
     }, 3000);
   };
 
   return (
-    <div className="auth-premium-wrapper">
-      <div className="auth-premium-card">
-        <div className="auth-header">
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-7)' }}>
           <div className="auth-logo-box">
-            <KeyRound size={32} />
+            <KeyRound size={28} />
           </div>
-          <h1 className="auth-title">Reset Password</h1>
-          <p className="auth-subtitle">We'll send you a link to reset your password</p>
+          <h1 className="auth-title">Reset password</h1>
+          <p className="auth-subtitle" style={{ marginBottom: 0 }}>
+            We'll send a reset link to your email
+          </p>
         </div>
 
         {submitted ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#16a34a' }}>Check your email</h3>
-            <p style={{ color: '#666', lineHeight: 1.5 }}>
-              We've sent password reset instructions to <strong>{email}</strong>.
+          <div style={{ textAlign: 'center', padding: 'var(--space-6) 0' }}>
+            <div className="auth-success-banner">
+              Reset instructions sent to <strong>{email}</strong>
+            </div>
+            <p className="text-caption" style={{ marginTop: 'var(--space-4)' }}>
+              Redirecting to login...
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="input-group">
-              <label>Email Address</label>
-              <input 
-                type="email" 
-                placeholder="name@example.com"
+              <label>Email address</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            
+
             <button type="submit" className="btn-primary-auth">
-              Send Reset Link
+              Send reset link
             </button>
           </form>
         )}
-        
+
         {!submitted && (
           <div className="auth-footer">
-            Remembered your password? <span onClick={() => navigate('/login')} className="auth-link">Back to login</span>
+            Remember your password?{' '}
+            <span onClick={() => navigate('/login')} className="auth-link">
+              Sign in
+            </span>
           </div>
         )}
       </div>

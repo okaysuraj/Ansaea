@@ -1,23 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Calendar, MessageSquare, Video, Phone } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Calendar, Clock, MessageSquare, Phone, Video } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../context/AuthContext';
+import { Colors, Palette, Radius, Spacing } from '../../../constants/theme';
+import { useAuth } from '../../../context/useAuth';
 
 export default function MyAppointments() {
   const { authenticatedFetch } = useAuth();
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const theme = isDark ? Colors.dark : Colors.light;
 
   const fetchAppointments = async () => {
     try {
       const response = await authenticatedFetch('/api/psychiatrists/appointments');
       if (response.ok) {
         const data = await response.json();
-        setAppointments(data);
+        setAppointments(Array.isArray(data) ? data : []);
       }
     } catch (e) {
-      console.log('Error fetching appointments:', e);
+      console.error('Error fetching appointments:', e);
     } finally {
       setLoading(false);
     }
@@ -27,85 +42,224 @@ export default function MyAppointments() {
     fetchAppointments();
   }, []);
 
-  const handleCancel = async (id) => {
-    Alert.alert("Cancel Booking", "Are you sure you want to cancel this booking?", [
-      { text: "No", style: "cancel" },
-      { 
-        text: "Yes, Cancel", 
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const response = await authenticatedFetch(`/api/psychiatrists/appointments/${id}/cancel`, { method: 'POST' });
-            if (response.ok) fetchAppointments();
-          } catch (e) {
-            console.log(e);
-          }
-        }
-      }
-    ]);
+  const handleCancel = async (id: string) => {
+    Alert.alert(
+      'Cancel Consultation',
+      'Are you sure you want to cancel this scheduled consultation?',
+      [
+        { text: 'Keep Appointment', style: 'cancel' },
+        {
+          text: 'Cancel Appointment',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await authenticatedFetch(
+                `/api/psychiatrists/appointments/${id}/cancel`,
+                { method: 'POST' },
+              );
+              if (response.ok) fetchAppointments();
+            } catch (e) {
+              console.error(e);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleJoin = (appt: any) => {
+    router.push({
+      pathname: '/(shared)/video_call' as any,
+      params: { appointmentId: appt.id },
+    });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Sessions</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.title, { color: theme.text }]}>My Sessions</Text>
       </View>
-      
+
       {loading ? (
-        <ActivityIndicator size="large" color="#0ea5e9" style={{ marginTop: 40 }} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Palette.sagePrimary} />
+          <Text style={{ marginTop: 12, color: theme.textSecondary, fontSize: 14 }}>
+            Loading clinical sessions...
+          </Text>
+        </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {appointments.length === 0 ? (
-            <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 40 }}>No upcoming sessions.</Text>
-          ) : (
-            appointments.map(appt => (
-              <View key={appt.id} style={styles.card}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <View>
-                    <Text style={styles.docName}>{appt.doctor_name}</Text>
-                    <Text style={{ color: '#0ea5e9', fontSize: 12, marginTop: 2 }}>{appt.doctor_specialty}</Text>
-                    <Text style={styles.date}>{appt.date} • {appt.time_slot}</Text>
-                  </View>
-                  <View style={styles.iconBox}>
-                    {appt.session_type === 'video' ? <Video size={20} color="#0ea5e9" /> : 
-                     appt.session_type === 'call' ? <Phone size={20} color="#0ea5e9" /> :
-                     <MessageSquare size={20} color="#0ea5e9" />}
-                  </View>
-                </View>
-                
-                {appt.status === 'upcoming' ? (
-                  <View style={styles.actions}>
-                    <TouchableOpacity style={styles.joinBtn}><Text style={styles.joinText}>Join Session</Text></TouchableOpacity>
-                    <TouchableOpacity style={styles.cancelBtn} onPress={() => handleCancel(appt.id)}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={{ marginTop: 16, alignItems: 'center' }}>
-                    <Text style={{ color: appt.status === 'cancelled' ? '#ef4444' : '#10b981', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                      {appt.status}
+        <FlatList
+          data={appointments}
+          keyExtractor={(appt) => appt.id?.toString() || Math.random().toString()}
+          contentContainerStyle={styles.scroll}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews
+          ListEmptyComponent={
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <Calendar size={48} color={theme.textTertiary} style={{ marginBottom: 16 }} />
+              <Text style={{ color: theme.text, fontSize: 17, fontWeight: '700', marginBottom: 6 }}>
+                No Upcoming Sessions
+              </Text>
+              <Text
+                style={{
+                  color: theme.textSecondary,
+                  textAlign: 'center',
+                  fontSize: 14,
+                  lineHeight: 20,
+                }}
+              >
+                Book an appointment with a specialist from the directory to start care.
+              </Text>
+            </View>
+          }
+          renderItem={({ item: appt }) => (
+            <View
+              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1, marginRight: Spacing.three }}>
+                  <Text style={[styles.docName, { color: theme.text }]}>
+                    {appt.doctor_name || 'Attending Physician'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.docSpec,
+                      { color: isDark ? Palette.sageLuminous : Palette.sagePrimary },
+                    ]}
+                  >
+                    {appt.doctor_specialty || 'Clinical Specialist'}
+                  </Text>
+                  <View style={styles.timeRow}>
+                    <Clock size={13} color={theme.textTertiary} style={{ marginRight: 4 }} />
+                    <Text style={[styles.date, { color: theme.textSecondary }]}>
+                      {appt.date} • {appt.time_slot}
                     </Text>
                   </View>
-                )}
+                </View>
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: isDark ? 'rgba(45, 106, 79, 0.25)' : Palette.sageSubtle },
+                  ]}
+                >
+                  {appt.session_type === 'video' ? (
+                    <Video size={20} color={isDark ? Palette.sageLuminous : Palette.sagePrimary} />
+                  ) : appt.session_type === 'call' ? (
+                    <Phone size={20} color={isDark ? Palette.sageLuminous : Palette.sagePrimary} />
+                  ) : (
+                    <MessageSquare
+                      size={20}
+                      color={isDark ? Palette.sageLuminous : Palette.sagePrimary}
+                    />
+                  )}
+                </View>
               </View>
-            ))
+
+              {appt.status === 'upcoming' ? (
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={[styles.joinBtn, { backgroundColor: Palette.sagePrimary }]}
+                    onPress={() => handleJoin(appt)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.joinText}>Join Session</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.cancelBtn,
+                      {
+                        backgroundColor: isDark ? Palette.surfaceDark2 : Palette.surfaceWarm2,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                    onPress={() => handleCancel(appt.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.cancelText, { color: theme.textSecondary }]}>
+                      Reschedule / Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.statusBanner,
+                    {
+                      backgroundColor:
+                        appt.status === 'cancelled'
+                          ? isDark
+                            ? 'rgba(193, 41, 46, 0.15)'
+                            : Palette.dangerSubtle
+                          : isDark
+                            ? 'rgba(64, 145, 108, 0.2)'
+                            : Palette.sageSubtle,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color:
+                        appt.status === 'cancelled'
+                          ? Palette.danger
+                          : isDark
+                            ? Palette.sageLuminous
+                            : Palette.sagePrimary,
+                      fontWeight: '700',
+                      fontSize: 12,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {appt.status}
+                  </Text>
+                </View>
+              )}
+            </View>
           )}
-        </ScrollView>
+        />
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
-  header: { padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#F8FAFC' },
-  scroll: { padding: 20 },
-  card: { backgroundColor: '#1E293B', padding: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  docName: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC' },
-  date: { fontSize: 14, color: '#94A3B8', marginTop: 8 },
-  iconBox: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(14, 165, 233, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  actions: { flexDirection: 'row', marginTop: 16, gap: 12 },
-  joinBtn: { flex: 1, backgroundColor: '#0ea5e9', padding: 12, borderRadius: 8, alignItems: 'center' },
-  joinText: { color: '#fff', fontWeight: '600' },
-  cancelBtn: { flex: 1, backgroundColor: 'transparent', padding: 12, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#ef4444' },
-  cancelText: { color: '#ef4444', fontWeight: '600' }
+  container: { flex: 1 },
+  header: { padding: Spacing.four, borderBottomWidth: 1 },
+  title: { fontSize: 24, fontWeight: '700' },
+  scroll: { padding: Spacing.four, paddingBottom: 60 },
+  card: {
+    padding: Spacing.four,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.three,
+    borderWidth: 1,
+  },
+  docName: { fontSize: 17, fontWeight: '700' },
+  docSpec: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+  timeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  date: { fontSize: 13 },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.four },
+  joinBtn: { flex: 1, paddingVertical: 12, borderRadius: Radius.md, alignItems: 'center' },
+  joinText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  cancelText: { fontWeight: '600', fontSize: 13 },
+  statusBanner: {
+    marginTop: Spacing.three,
+    paddingVertical: 8,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+  },
 });

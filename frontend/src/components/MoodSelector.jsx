@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { Smile, Moon, Droplets, ShieldAlert, Sparkles, BookOpen } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { BookOpen, Droplets, Moon, ShieldAlert, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '../context/useAuth';
 
 const MOODS = [
-  { type: 'happy', emoji: '😊', label: 'Happy', color: '#10b981' },
-  { type: 'calm', emoji: '😌', label: 'Calm', color: '#0ea5e9' },
-  { type: 'energetic', emoji: '⚡', label: 'Active', color: '#f59e0b' },
-  { type: 'stressed', emoji: '😫', label: 'Stressed', color: '#ec4899' },
-  { type: 'anxious', emoji: '🥺', label: 'Anxious', color: '#8b5cf6' },
-  { type: 'sad', emoji: '😢', label: 'Sad', color: '#3b82f6' },
-  { type: 'angry', emoji: '😡', label: 'Angry', color: '#ef4444' }
+  { type: 'happy', emoji: '😊', label: 'Happy', color: '#40916C' },
+  { type: 'calm', emoji: '😌', label: 'Calm', color: '#457B9D' },
+  { type: 'energetic', emoji: '⚡', label: 'Active', color: '#E09F3E' },
+  { type: 'stressed', emoji: '😫', label: 'Stressed', color: '#C1292E' },
+  { type: 'anxious', emoji: '🥺', label: 'Anxious', color: '#7B68AE' },
+  { type: 'sad', emoji: '😢', label: 'Sad', color: '#457B9D' },
+  { type: 'angry', emoji: '😡', label: 'Angry', color: '#C1292E' },
 ];
 
 const JOURNAL_PROMPTS = [
-  "What are three small things you are grateful for today?",
-  "Describe a moment today that made you feel peaceful or happy.",
-  "What is currently heavy on your mind, and how can you release it?",
-  "What did you learn about yourself through today's challenges?"
+  'What are three small things you are grateful for today?',
+  'Describe a moment today that made you feel peaceful or happy.',
+  'What is currently heavy on your mind, and how can you release it?',
+  "What did you learn about yourself through today's challenges?",
 ];
 
 export default function MoodSelector({ onLogSuccess }) {
@@ -33,14 +33,14 @@ export default function MoodSelector({ onLogSuccess }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const handlePromptSelect = (prompt) => {
-    setJournalEntry((prev) => prev ? prev + '\n\n' + prompt : prompt);
+    setJournalEntry((prev) => (prev ? prev + '\n\n' + prompt : prompt));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage('');
-    
+
     try {
       const response = await authenticatedFetch('/tracker/mood', {
         method: 'POST',
@@ -51,13 +51,13 @@ export default function MoodSelector({ onLogSuccess }) {
           sleep_hours: Number(sleepHours),
           water_intake: Number(waterIntake),
           stress_level: Number(stressLevel),
-          date: todayStr
-        })
+          date: todayStr,
+        }),
       });
-      
+
       const data = await response.json();
       if (response.ok) {
-        setMessage('Your mind log has been captured securely.');
+        setMessage('Your check-in has been saved.');
         if (onLogSuccess) onLogSuccess();
       } else {
         setMessage(data.detail || 'Failed to submit logs');
@@ -70,62 +70,76 @@ export default function MoodSelector({ onLogSuccess }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel" style={{ padding: '2.5rem', height: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-        <Sparkles style={{ color: 'var(--color-primary)' }} />
-        <h3>Daily Mind Check-in</h3>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>{todayStr}</span>
+    <form onSubmit={handleSubmit} className="card card-padding" style={{ height: '100%' }}>
+      <div className="flex items-center gap-3 mb-6">
+        <Sparkles size={18} style={{ color: 'var(--accent)' }} />
+        <h3>Daily Check-in</h3>
+        <span className="text-caption" style={{ marginLeft: 'auto' }}>
+          {todayStr}
+        </span>
       </div>
 
       {message && (
         <div
-          className="glass-panel"
-          style={{
-            padding: '1rem',
-            marginBottom: '1.5rem',
-            borderColor: message.includes('captured') ? 'var(--color-success)' : 'var(--color-danger)',
-            background: message.includes('captured') ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-            fontSize: '0.9rem',
-            textAlign: 'center'
-          }}
+          className={message.includes('saved') ? 'auth-success-banner' : 'auth-error-banner'}
+          style={{ marginBottom: 'var(--space-4)' }}
         >
           {message}
         </div>
       )}
 
       {/* Mood Selector Grid */}
-      <div style={{ marginBottom: '2rem' }}>
-        <span className="form-label">How is your core energy right now?</span>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
+      <div className="mb-4">
+        <span className="form-label">How are you feeling?</span>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))',
+            gap: '0.4rem',
+            marginTop: 'var(--space-2)',
+          }}
+        >
           {MOODS.map((m) => (
             <div
               key={m.type}
               onClick={() => setSelectedMood(m.type)}
-              className="glass-panel"
+              className="card"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0.75rem 0',
+                padding: '0.6rem 0',
                 cursor: 'pointer',
-                borderColor: selectedMood === m.type ? m.color : 'transparent',
-                background: selectedMood === m.type ? `${m.color}15` : 'rgba(255, 255, 255, 0.01)',
-                transition: 'all 0.2s'
+                borderColor: selectedMood === m.type ? m.color : 'var(--border)',
+                background: selectedMood === m.type ? `${m.color}12` : 'var(--surface-1)',
+                transition: 'all 200ms var(--ease-out)',
               }}
             >
-              <span style={{ fontSize: '1.6rem', marginBottom: '0.25rem' }}>{m.emoji}</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: '500', color: selectedMood === m.type ? m.color : 'var(--text-muted)' }}>{m.label}</span>
+              <span style={{ fontSize: '1.4rem', marginBottom: '0.2rem' }}>{m.emoji}</span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 500,
+                  color: selectedMood === m.type ? m.color : 'var(--text-tertiary)',
+                }}
+              >
+                {m.label}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Mood Slider */}
-      <div className="form-group" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <span className="form-label" style={{ margin: 0 }}>Mood Intensity</span>
-          <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--color-primary)' }}>{moodRating} / 10</span>
+      <div className="form-group mb-4">
+        <div className="flex justify-between mb-2">
+          <span className="form-label" style={{ margin: 0 }}>
+            Mood intensity
+          </span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent)' }}>
+            {moodRating}/10
+          </span>
         </div>
         <input
           type="range"
@@ -133,22 +147,33 @@ export default function MoodSelector({ onLogSuccess }) {
           max="10"
           value={moodRating}
           onChange={(e) => setMoodRating(e.target.value)}
-          style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          style={{
+            width: '100%',
+            height: '4px',
+            background: 'var(--surface-3)',
+            borderRadius: '2px',
+            outline: 'none',
+            appearance: 'none',
+            cursor: 'pointer',
+            accentColor: 'var(--accent)',
+          }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-          <span>Flat / Heavy</span>
-          <span>Radiant / Peaceful</span>
+        <div className="flex justify-between text-caption mt-2" style={{ fontSize: '0.6875rem' }}>
+          <span>Low</span>
+          <span>High</span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-        {/* Sleep Counter */}
+      <div className="bento-grid bento-grid-2 mb-4">
+        {/* Sleep */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <Moon size={16} style={{ color: 'var(--color-info)' }} />
-            <span className="form-label" style={{ margin: 0 }}>Sleep Log</span>
+          <div className="flex items-center gap-2 mb-2">
+            <Moon size={14} style={{ color: 'var(--status-info)' }} />
+            <span className="form-label" style={{ margin: 0 }}>
+              Sleep
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="flex items-center gap-2">
             <input
               type="number"
               step="0.5"
@@ -157,49 +182,55 @@ export default function MoodSelector({ onLogSuccess }) {
               value={sleepHours}
               onChange={(e) => setSleepHours(Math.max(0, Number(e.target.value)))}
               className="form-input"
-              style={{ width: '80px', padding: '0.5rem' }}
+              style={{ width: '72px', padding: '0.5rem', textAlign: 'center' }}
             />
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Hours</span>
+            <span className="text-caption">hours</span>
           </div>
         </div>
 
-        {/* Water Counter */}
+        {/* Water */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <Droplets size={16} style={{ color: 'var(--color-success)' }} />
-            <span className="form-label" style={{ margin: 0 }}>Hydration</span>
+          <div className="flex items-center gap-2 mb-2">
+            <Droplets size={14} style={{ color: 'var(--status-success)' }} />
+            <span className="form-label" style={{ margin: 0 }}>
+              Hydration
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setWaterIntake(Math.max(0, waterIntake - 1))}
-              className="form-input"
-              style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              className="btn btn-secondary btn-icon btn-sm"
             >
-              -
+              −
             </button>
-            <span style={{ fontSize: '1rem', fontWeight: '600', width: '30px', textAlign: 'center' }}>{waterIntake}</span>
+            <span style={{ fontSize: '1rem', fontWeight: 600, width: '28px', textAlign: 'center' }}>
+              {waterIntake}
+            </span>
             <button
               type="button"
               onClick={() => setWaterIntake(waterIntake + 1)}
-              className="form-input"
-              style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              className="btn btn-secondary btn-icon btn-sm"
             >
               +
             </button>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>Glasses</span>
+            <span className="text-caption">glasses</span>
           </div>
         </div>
       </div>
 
       {/* Stress Slider */}
-      <div className="form-group" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldAlert size={16} style={{ color: 'var(--color-danger)' }} />
-            <span className="form-label" style={{ margin: 0 }}>Stress Load</span>
+      <div className="form-group mb-4">
+        <div className="flex justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={14} style={{ color: 'var(--status-danger)' }} />
+            <span className="form-label" style={{ margin: 0 }}>
+              Stress level
+            </span>
           </div>
-          <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--color-danger)' }}>{stressLevel} / 10</span>
+          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--status-danger)' }}>
+            {stressLevel}/10
+          </span>
         </div>
         <input
           type="range"
@@ -207,38 +238,47 @@ export default function MoodSelector({ onLogSuccess }) {
           max="10"
           value={stressLevel}
           onChange={(e) => setStressLevel(e.target.value)}
-          style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          style={{
+            width: '100%',
+            height: '4px',
+            background: 'var(--surface-3)',
+            borderRadius: '2px',
+            outline: 'none',
+            appearance: 'none',
+            cursor: 'pointer',
+            accentColor: 'var(--status-danger)',
+          }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-          <span>Tranquil</span>
+        <div className="flex justify-between text-caption mt-2" style={{ fontSize: '0.6875rem' }}>
+          <span>Calm</span>
           <span>Overwhelming</span>
         </div>
       </div>
 
-      {/* Journal Area */}
-      <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <BookOpen size={16} style={{ color: 'var(--color-secondary)' }} />
-          <span className="form-label" style={{ margin: 0 }}>Mind Flow Journal</span>
+      {/* Journal */}
+      <div className="form-group mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <BookOpen size={14} style={{ color: 'var(--accent)' }} />
+          <span className="form-label" style={{ margin: 0 }}>
+            Journal
+          </span>
         </div>
-        
-        {/* Prompts list */}
-        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+
+        <div
+          className="flex gap-2"
+          style={{
+            overflowX: 'auto',
+            paddingBottom: 'var(--space-2)',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
           {JOURNAL_PROMPTS.map((p, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => handlePromptSelect(p)}
-              className="glass-panel"
-              style={{
-                padding: '0.4rem 0.8rem',
-                fontSize: '0.75rem',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--border-glass)'
-              }}
+              className="btn btn-secondary btn-sm"
+              style={{ whiteSpace: 'nowrap' }}
             >
               Prompt {idx + 1}
             </button>
@@ -249,14 +289,14 @@ export default function MoodSelector({ onLogSuccess }) {
           value={journalEntry}
           onChange={(e) => setJournalEntry(e.target.value)}
           className="form-input"
-          placeholder="Unload any thoughts, feelings, or obstacles you've navigated today. Writing them down clears subconscious static..."
-          rows="4"
+          placeholder="Write about your day, thoughts, or anything on your mind..."
+          rows="3"
           style={{ resize: 'none' }}
         />
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="btn-submit" style={{ marginTop: 0 }}>
-        {isSubmitting ? 'Securing Check-in...' : 'Lock in Today\'s Ansaea'}
+      <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-full">
+        {isSubmitting ? 'Saving...' : 'Save check-in'}
       </button>
     </form>
   );

@@ -1,4 +1,3 @@
-import React from 'react';
 import PsychiatristDirectory from '../../../components/PsychiatristDirectory';
 
 export default function FindDoctors() {

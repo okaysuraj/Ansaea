@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
+import { LayoutDashboard } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
-import { LayoutDashboard, Pill, Package } from 'lucide-react-native';
 
 export default function PharmacyLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const activeColor = '#10b981'; 
+  const activeColor = '#10b981';
 
   return (
     <Tabs

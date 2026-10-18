@@ -1,23 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
-import { useAuth } from '../context/AuthContext';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useAuth } from '../context/useAuth';
 
 export default function LoginScreen() {
   const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('patient');
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
-    
+
     if (isLogin) {
       const res = await login(email, password);
       if (!res.success) {
@@ -25,7 +35,7 @@ export default function LoginScreen() {
       }
     } else {
       if (!username) {
-        setError("Username is required");
+        setError('Username is required');
         setLoading(false);
         return;
       }
@@ -33,7 +43,10 @@ export default function LoginScreen() {
       if (!res.success) {
         setError(res.error || 'Registration failed');
       } else {
-        Alert.alert("Verification Required", "A verification link has been sent to your email. Please verify your email before logging in.");
+        Alert.alert(
+          'Verification Required',
+          'A verification link has been sent to your email. Please verify your email before logging in.',
+        );
         setIsLogin(true); // Switch to login view
       }
     }
@@ -43,14 +56,17 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require('../../assets/images/logo.png')} style={{ width: 80, height: 80, resizeMode: 'contain', marginBottom: 12 }} />
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={{ width: 80, height: 80, resizeMode: 'contain', marginBottom: 12 }}
+        />
         <Text style={styles.title}>Ansaea Enterprise</Text>
         <Text style={styles.subtitle}>Digital Health Ecosystem</Text>
       </View>
 
       <View style={styles.formContainer}>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        
+
         {!isLogin && (
           <>
             <Text style={styles.label}>Username</Text>
@@ -62,12 +78,12 @@ export default function LoginScreen() {
               onChangeText={setUsername}
               autoCapitalize="none"
             />
-            
+
             <Text style={styles.label}>Role</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {['patient', 'doctor'].map((r) => (
-                <TouchableOpacity 
-                  key={r} 
+                <TouchableOpacity
+                  key={r}
                   onPress={() => setRole(r)}
                   style={[styles.roleBtn, role === r && styles.roleBtnActive]}
                 >
@@ -91,7 +107,18 @@ export default function LoginScreen() {
           keyboardType="email-address"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Text style={styles.label}>Password</Text>
+          {isLogin && (
+            <TouchableOpacity onPress={() => router.push('/forgot_password' as any)}>
+              <Text style={{ color: '#0EA5E9', fontSize: 13, fontWeight: '600' }}>
+                Forgot password?
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <TextInput
           style={styles.input}
           placeholder="Enter your password"
@@ -101,21 +128,33 @@ export default function LoginScreen() {
           secureTextEntry
         />
 
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleSubmit}
-          disabled={loading}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
           )}
         </TouchableOpacity>
-        
-        <TouchableOpacity style={{ marginTop: 24, alignItems: 'center' }} onPress={() => { setIsLogin(!isLogin); setError(''); }}>
-          <Text style={{ color: '#0EA5E9' }}>
-            {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+
+        <TouchableOpacity
+          style={{ marginTop: 20, alignItems: 'center' }}
+          onPress={() => {
+            setIsLogin(!isLogin);
+            setError('');
+          }}
+        >
+          <Text style={{ color: '#0EA5E9', fontWeight: '500' }}>
+            {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ marginTop: 14, alignItems: 'center' }}
+          onPress={() => router.push('/intro' as any)}
+        >
+          <Text style={{ color: '#64748B', fontSize: 13 }}>
+            New to Ansaea?{' '}
+            <Text style={{ color: '#94A3B8', textDecorationLine: 'underline' }}>Tour the app</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -191,17 +230,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#334155',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   roleBtnActive: {
     backgroundColor: 'rgba(14, 165, 233, 0.1)',
-    borderColor: '#0EA5E9'
+    borderColor: '#0EA5E9',
   },
   roleBtnText: {
-    color: '#94A3B8'
+    color: '#94A3B8',
   },
   roleBtnTextActive: {
     color: '#0EA5E9',
-    fontWeight: 'bold'
-  }
+    fontWeight: 'bold',
+  },
 });

@@ -1,22 +1,23 @@
 import { Tabs } from 'expo-router';
+import { Calendar, LayoutDashboard, User, Users } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
-import { LayoutDashboard, Calendar, Users, User } from 'lucide-react-native';
+import { Palette } from '../../constants/theme';
 
 export default function DoctorLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const activeColor = '#8b5cf6'; // Distinct color for doctor
+  const activeColor = isDark ? Palette.sageLuminous : Palette.sagePrimary;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? '#0F172A' : '#ffffff',
-          borderTopColor: isDark ? '#334155' : '#e2e8f0',
+          backgroundColor: isDark ? Palette.surfaceDark0 : Palette.surfaceWarm0,
+          borderTopColor: isDark ? Palette.borderDark : Palette.borderWarm,
         },
         tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: isDark ? '#94a3b8' : '#64748b',
+        tabBarInactiveTintColor: isDark ? Palette.textDarkSecondary : Palette.textWarmSecondary,
       }}
     >
       <Tabs.Screen

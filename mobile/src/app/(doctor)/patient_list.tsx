@@ -1,14 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Search, SlidersHorizontal, ChevronRight, Calendar, MessageSquare, History, FileText, Plus } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
+import { ArrowLeft, ChevronRight, FileText, Search, User } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Palette, Radius, Spacing } from '../../constants/theme';
+import { useAuth } from '../../context/useAuth';
 
 export default function PatientList() {
   const { authenticatedFetch } = useAuth();
   const [activeFilter, setActiveFilter] = useState('Assigned to Me');
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const theme = isDark ? Colors.dark : Colors.light;
+
+  const accentColor = isDark ? Palette.sageLuminous : Palette.sagePrimary;
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -16,20 +35,21 @@ export default function PatientList() {
         const res = await authenticatedFetch('/api/doctors/patients');
         if (res.ok) {
           const data = await res.json();
-          setPatients(data.map((p: any) => ({
-            id: `#PT-${p.id.substring(0, 4).toUpperCase()}`,
-            name: p.name,
-            age: 45, // default
-            gender: 'Unknown',
-            status: p.status || 'Stable',
-            statusColor: '#10b981', // green default
-            lastVisit: 'Unknown',
-            detailLabel: 'Email',
-            detailValue: p.email,
-            nextAction: 'View Details',
-            actionIcon: FileText,
-            patientId: p.id
-          })));
+          setPatients(
+            data.map((p: any) => ({
+              id: `#PT-${(p.id || '1001').substring(0, 4).toUpperCase()}`,
+              name: p.name || 'Anonymous Patient',
+              age: 45,
+              gender: 'Adult',
+              status: p.status || 'Active Care',
+              statusColor: Palette.success,
+              lastVisit: 'Recent Consultation',
+              detailLabel: 'Contact',
+              detailValue: p.email || 'Encrypted Chart',
+              nextAction: 'Open Workspace',
+              patientId: p.id,
+            })),
+          );
         }
       } catch (err) {
         console.error(err);
@@ -40,143 +60,265 @@ export default function PatientList() {
     fetchPatients();
   }, [authenticatedFetch]);
 
+  const filteredPatients = patients.filter(
+    (p) =>
+      (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.id || '').toLowerCase().includes(search.toLowerCase()),
+  );
 
+  const renderPatientCard = useCallback(
+    ({ item: patient }: { item: any }) => (
+      <TouchableOpacity
+        style={[styles.patientCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        onPress={() => router.push(`/consultation_workspace?patientId=${patient.patientId}` as any)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardHeader}>
+          <View>
+            <Text style={[styles.patientName, { color: theme.text }]}>{patient.name}</Text>
+            <Text style={[styles.patientSub, { color: theme.textSecondary }]}>
+              {patient.age} yrs • {patient.gender} • ID: {patient.id}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: isDark ? 'rgba(64, 145, 108, 0.2)' : Palette.sageSubtle },
+            ]}
+          >
+            <Text style={[styles.statusText, { color: accentColor }]}>{patient.status}</Text>
+          </View>
+        </View>
+
+        <View style={[styles.cardMiddle, { borderColor: theme.border }]}>
+          <View style={styles.middleCol}>
+            <Text style={[styles.middleLabel, { color: theme.textTertiary }]}>LAST ENCOUNTER</Text>
+            <Text style={[styles.middleVal, { color: theme.text }]}>{patient.lastVisit}</Text>
+          </View>
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <View style={styles.middleCol}>
+            <Text style={[styles.middleLabel, { color: theme.textTertiary }]}>
+              {patient.detailLabel.toUpperCase()}
+            </Text>
+            <Text style={[styles.middleVal, { color: theme.text }]}>{patient.detailValue}</Text>
+          </View>
+        </View>
+
+        <View style={styles.cardFooter}>
+          <View style={styles.footerLeft}>
+            <FileText size={15} color={theme.textTertiary} />
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+              {patient.nextAction}
+            </Text>
+          </View>
+          <View style={styles.footerRight}>
+            <Text style={[styles.actionText, { color: accentColor }]}>Launch Workspace</Text>
+            <ChevronRight size={15} color={accentColor} />
+          </View>
+        </View>
+      </TouchableOpacity>
+    ),
+    [theme, isDark, accentColor],
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.surface }]}
+      >
         <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <Text style={{color: '#FFF', fontWeight: 'bold'}}>Dr</Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={22} color={theme.text} />
+          </TouchableOpacity>
+          <View style={[styles.avatar, { backgroundColor: Palette.sagePrimary }]}>
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>DR</Text>
           </View>
-          <Text style={styles.headerTitle}>MedPro Central</Text>
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>Ansaea Clinician</Text>
+            <Text style={[styles.headerSub, { color: theme.textSecondary }]}>
+              Active Patient Roster
+            </Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.iconBtn}>
-          <Search size={24} color="#0ea5e9" />
-        </TouchableOpacity>
       </View>
 
-      <View style={styles.searchSection}>
-        <View style={styles.searchBox}>
-          <Search size={20} color="#94A3B8" style={styles.searchIcon} />
-          <TextInput 
-            style={styles.searchInput}
+      <View
+        style={[
+          styles.searchSection,
+          { backgroundColor: theme.surface, borderBottomColor: theme.border },
+        ]}
+      >
+        <View
+          style={[
+            styles.searchBox,
+            {
+              backgroundColor: isDark ? Palette.surfaceDark0 : Palette.surfaceWarm0,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <Search size={18} color={theme.textTertiary} style={styles.searchIcon} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search patients by name or ID..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={theme.textTertiary}
+            value={search}
+            onChangeText={setSearch}
           />
-          <TouchableOpacity style={styles.filterIcon}>
-            <SlidersHorizontal size={20} color="#94A3B8" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.filterRow}>
-          {['Assigned to Me', 'All Patients'].map(filter => (
-            <TouchableOpacity 
-              key={filter} 
-              style={[styles.filterBtn, activeFilter === filter && styles.filterBtnActive]}
-              onPress={() => setActiveFilter(filter)}
-            >
-              <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
+          {['Assigned to Me', 'All Clinical Charts'].map((filter) => {
+            const isSel = activeFilter === filter;
+            return (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterBtn,
+                  {
+                    backgroundColor: isDark ? Palette.surfaceDark0 : Palette.surfaceWarm0,
+                    borderColor: theme.border,
+                  },
+                  isSel && {
+                    backgroundColor: Palette.sagePrimary,
+                    borderColor: Palette.sagePrimary,
+                  },
+                ]}
+                onPress={() => setActiveFilter(filter)}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    { color: theme.textSecondary },
+                    isSel && { color: '#FFF', fontWeight: '700' },
+                  ]}
+                >
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        
-        {loading ? (
-          <ActivityIndicator size="large" color="#0ea5e9" style={{ marginTop: 20 }} />
-        ) : patients.length === 0 ? (
-          <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 20 }}>No patients found.</Text>
-        ) : (
-          patients.map((patient: any, i: number) => (
-            <TouchableOpacity key={i} style={styles.patientCard} onPress={() => router.push(`/consultation_workspace?patientId=${patient.patientId}`)}>
-            
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.patientName}>{patient.name}</Text>
-                <Text style={styles.patientSub}>{patient.age} yrs • {patient.gender} • ID: {patient.id}</Text>
-              </View>
-              <View style={[styles.statusBadge, { backgroundColor: `${patient.statusColor}20` }]}>
-                <Text style={[styles.statusText, { color: patient.statusColor }]}>{patient.status}</Text>
-              </View>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Palette.sagePrimary} />
+          <Text style={{ marginTop: 12, color: theme.textSecondary, fontSize: 14 }}>
+            Synchronizing clinical roster...
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredPatients}
+          keyExtractor={(item, index) => item.patientId || index.toString()}
+          renderItem={renderPatientCard}
+          contentContainerStyle={styles.scroll}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          ListEmptyComponent={
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <User size={40} color={theme.textTertiary} style={{ marginBottom: 12 }} />
+              <Text style={{ color: theme.text, fontSize: 16, fontWeight: '700' }}>
+                No Patients Found
+              </Text>
+              <Text
+                style={{
+                  color: theme.textSecondary,
+                  fontSize: 13,
+                  textAlign: 'center',
+                  marginTop: 4,
+                }}
+              >
+                Patients with scheduled or completed consultations will appear here.
+              </Text>
             </View>
-
-            <View style={styles.cardMiddle}>
-              <View style={styles.middleCol}>
-                <Text style={styles.middleLabel}>LAST VISIT</Text>
-                <Text style={styles.middleVal}>{patient.lastVisit}</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.middleCol}>
-                <Text style={styles.middleLabel}>{patient.detailLabel.toUpperCase()}</Text>
-                <Text style={[styles.middleVal, patient.detailValueColor && { color: patient.detailValueColor }]}>{patient.detailValue}</Text>
-              </View>
-            </View>
-
-            <View style={styles.cardFooter}>
-              <View style={styles.footerLeft}>
-                <patient.actionIcon size={16} color="#94A3B8" />
-                <Text style={styles.footerText}>{patient.nextAction}</Text>
-              </View>
-              <View style={styles.footerRight}>
-                <Text style={styles.actionText}>{patient.status === 'Needs Review' ? 'Take Action' : 'View Records'}</Text>
-                <ChevronRight size={16} color="#0ea5e9" />
-              </View>
-            </View>
-
-          </TouchableOpacity>
-        )))}
-
-      </ScrollView>
-
-      <TouchableOpacity style={styles.fabAdd}>
-        <Plus size={28} color="#FFF" />
-      </TouchableOpacity>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#1E293B', backgroundColor: '#0F172A' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#0ea5e9' },
-  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  
-  searchSection: { padding: 16, backgroundColor: '#0F172A', zIndex: 10 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', borderRadius: 12, height: 48, paddingHorizontal: 12, marginBottom: 16 },
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: 1,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  backBtn: { width: 36, height: 36, justifyContent: 'center' },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 16, fontWeight: '700' },
+  headerSub: { fontSize: 11 },
+  searchSection: { padding: Spacing.four, borderBottomWidth: 1 },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.md,
+    height: 44,
+    paddingHorizontal: 12,
+    marginBottom: Spacing.three,
+    borderWidth: 1,
+  },
   searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, color: '#F8FAFC', fontSize: 16 },
-  filterIcon: { padding: 4 },
-  
+  searchInput: { flex: 1, fontSize: 14 },
   filterRow: { flexDirection: 'row', gap: 8 },
-  filterBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1E293B' },
-  filterBtnActive: { backgroundColor: '#0ea5e9' },
-  filterText: { color: '#94A3B8', fontWeight: 'bold', fontSize: 13 },
-  filterTextActive: { color: '#FFF' },
-
-  scroll: { padding: 16, paddingBottom: 100 },
-  
-  patientCard: { backgroundColor: '#1E293B', borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  patientName: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 2 },
-  patientSub: { fontSize: 13, color: '#94A3B8' },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  statusText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
-
-  cardMiddle: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#334155', paddingVertical: 12, marginBottom: 12 },
+  filterBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  filterText: { fontSize: 12, fontWeight: '600' },
+  scroll: { padding: Spacing.four, paddingBottom: 60 },
+  patientCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    marginBottom: Spacing.three,
+    borderWidth: 1,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  patientName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  patientSub: { fontSize: 12 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.full },
+  statusText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  cardMiddle: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
   middleCol: { flex: 1 },
-  divider: { width: 1, backgroundColor: '#334155', marginHorizontal: 16 },
-  middleLabel: { fontSize: 10, color: '#94A3B8', fontWeight: 'bold', marginBottom: 4 },
-  middleVal: { fontSize: 14, color: '#F8FAFC', fontWeight: 'bold' },
-
+  divider: { width: 1, marginHorizontal: 12 },
+  middleLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
+  middleVal: { fontSize: 13, fontWeight: '600' },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   footerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  footerText: { fontSize: 13, color: '#94A3B8' },
-  footerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  actionText: { fontSize: 13, color: '#0ea5e9', fontWeight: 'bold' },
-
-  fabAdd: { position: 'absolute', bottom: 24, right: 24, width: 60, height: 60, borderRadius: 30, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4 }
+  footerText: { fontSize: 12 },
+  footerRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  actionText: { fontSize: 12, fontWeight: '700' },
 });

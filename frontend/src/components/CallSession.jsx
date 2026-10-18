@@ -1,33 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Phone, PhoneOff, Volume2 } from 'lucide-react';
 import DailyIframe from '@daily-co/daily-js';
+import { Phone, PhoneOff, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../context/useAuth';
 
-export default function CallSession({ appointment, isVideo, onClose }) {
+export default function CallSession({ appointment, onClose }) {
+  const { authenticatedFetch } = useAuth();
   const [callStatus, setCallStatus] = useState('ringing'); // ringing, connected, ended
   const [callSeconds, setCallSeconds] = useState(0);
-  
+
   const callContainerRef = useRef(null);
   const callFrameRef = useRef(null);
   const audioCtxRef = useRef(null);
   const ringIntervalRef = useRef(null);
 
-  // Format seconds to MM:SS
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
     const remaining = secs % 60;
     return `${mins.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`;
   };
 
-  const startRingtone = () => {
+  const startRingtone = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      
+
       audioCtxRef.current = new AudioCtx();
       const ctx = audioCtxRef.current;
 
       const playRing = () => {
-        if (callStatus !== 'ringing') return;
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -49,14 +49,14 @@ export default function CallSession({ appointment, isVideo, onClose }) {
       playRing();
       ringIntervalRef.current = setInterval(playRing, 3500);
     } catch (e) {
-      console.log('Audio ringtone failed:', e);
+      console.error('Audio ringtone failed:', e);
     }
-  };
+  }, []);
 
   const stopAudioTracks = () => {
     if (ringIntervalRef.current) clearInterval(ringIntervalRef.current);
     if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-      audioCtxRef.current.close().catch(e => console.error(e));
+      audioCtxRef.current.close().catch((e) => console.error(e));
     }
   };
 
@@ -64,7 +64,6 @@ export default function CallSession({ appointment, isVideo, onClose }) {
     setCallStatus('connected');
     stopAudioTracks();
 
-    // Initialize Daily.co
     if (callContainerRef.current) {
       callFrameRef.current = DailyIframe.createFrame(callContainerRef.current, {
         showLeaveButton: true,
@@ -72,25 +71,21 @@ export default function CallSession({ appointment, isVideo, onClose }) {
           width: '100%',
           height: '100%',
           border: 'none',
-          borderRadius: '12px'
-        }
+          borderRadius: 'var(--radius-lg)',
+        },
       });
 
-      // Fetch the real room URL from the backend
-      let dailyUrl = `https://mock.daily.co/room-${appointment.id}`; // Fallback
+      let dailyUrl = `https://video.ansaea.co/room-${appointment?.id || 'session'}`;
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:8000/api/video/room/${appointment.id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await authenticatedFetch(`/video/room/${appointment?.id}`);
         if (res.ok) {
-            const data = await res.json();
-            dailyUrl = data.url;
+          const data = await res.json();
+          dailyUrl = data.url;
         }
       } catch (e) {
-          console.error('Failed to get real video room', e);
+        console.error('Failed to get real video room', e);
       }
-      
+
       await callFrameRef.current.join({ url: dailyUrl });
 
       callFrameRef.current.on('left-meeting', () => {
@@ -107,9 +102,8 @@ export default function CallSession({ appointment, isVideo, onClose }) {
         callFrameRef.current.destroy();
       }
     };
-  }, []);
+  }, [startRingtone]);
 
-  // Connection timer
   useEffect(() => {
     if (callStatus !== 'connected') return;
     const timer = setInterval(() => setCallSeconds((s) => s + 1), 1000);
@@ -130,77 +124,170 @@ export default function CallSession({ appointment, isVideo, onClose }) {
   };
 
   return (
-    <div className="call-modal">
-      <div className="glass-panel call-card" style={{ width: '100%', maxWidth: '540px', background: 'rgba(10, 15, 30, 0.95)' }}>
-        
-        {/* Encryption alert banner */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
-          <Volume2 size={12} style={{ color: 'var(--color-success)' }} />
-          <span>WebRTC Peer-to-Peer Secure Encrypted Connection (Daily.co)</span>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(26, 26, 24, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        padding: 'var(--space-4)',
+      }}
+    >
+      <div
+        className="card card-padding"
+        style={{
+          width: '100%',
+          maxWidth: '520px',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
+        {/* Encrypted indicator */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: 'var(--space-1) var(--space-3)',
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)',
+            marginBottom: 'var(--space-6)',
+          }}
+        >
+          <ShieldCheck size={14} style={{ color: 'var(--status-success)' }} />
+          <span>WebRTC P2P Encrypted Call (Ansaea Secure)</span>
         </div>
 
-        {/* Video feeds container */}
-        <div 
-          ref={callContainerRef} 
-          style={{ 
-            width: '100%', 
-            height: callStatus === 'connected' ? '360px' : '0px', 
-            borderRadius: '16px', 
-            overflow: 'hidden', 
-            marginBottom: callStatus === 'connected' ? '1.5rem' : '0' 
+        {/* Video feed container */}
+        <div
+          ref={callContainerRef}
+          style={{
+            width: '100%',
+            height: callStatus === 'connected' ? '340px' : '0px',
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+            marginBottom: callStatus === 'connected' ? 'var(--space-4)' : '0',
           }}
         />
 
         {callStatus !== 'connected' && (
-          <div className="calling-avatar-ring">
+          <div style={{ marginBottom: 'var(--space-4)', position: 'relative' }}>
             <img
-              src={appointment.doctor_imageUrl}
-              alt={appointment.doctor_name}
-              className="calling-avatar"
-              style={{ borderColor: 'var(--color-primary)' }}
+              src={
+                appointment?.doctor_imageUrl ||
+                'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200'
+              }
+              alt={appointment?.doctor_name || 'Clinician'}
+              style={{
+                width: '88px',
+                height: '88px',
+                borderRadius: 'var(--radius-avatar)',
+                objectFit: 'cover',
+                border: '3px solid var(--accent-subtle)',
+                boxShadow: 'var(--shadow-md)',
+              }}
             />
           </div>
         )}
 
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: '0.25rem' }}>{appointment.doctor_name}</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>{appointment.doctor_specialty}</p>
+        <h3 style={{ margin: 0 }}>{appointment?.doctor_name || 'Dr. Sarah Jenkins'}</h3>
+        <p
+          className="text-caption"
+          style={{ marginTop: 'var(--space-1)', marginBottom: 'var(--space-4)' }}
+        >
+          {appointment?.doctor_specialty || 'Clinical Consultation'}
+        </p>
 
         {callStatus === 'ringing' && (
-          <span style={{ fontSize: '0.9rem', color: 'var(--color-primary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Ansaea Line Ringing...
-          </span>
+          <div style={{ marginBottom: 'var(--space-6)' }}>
+            <span className="badge badge-accent" style={{ animation: 'pulse 2s infinite' }}>
+              Incoming Secure Connection...
+            </span>
+          </div>
         )}
 
         {callStatus === 'connected' && (
-          <div>
-            <span style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: '700', color: 'white', display: 'block', marginBottom: '0.5rem' }}>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <span
+              className="text-mono"
+              style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)' }}
+            >
               {formatTime(callSeconds)}
             </span>
           </div>
         )}
 
         {callStatus === 'ended' && (
-          <span style={{ fontSize: '0.9rem', color: 'var(--color-danger)', fontWeight: '600', textTransform: 'uppercase' }}>
-            Session Closed
-          </span>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <span className="badge badge-danger">Consultation Concluded</span>
+          </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', alignItems: 'center' }}>
+        {/* Action button controls */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-4)',
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
           {callStatus === 'ringing' ? (
-            <div style={{ display: 'flex', gap: '2rem', marginTop: '1.5rem' }}>
-              <button onClick={endCall} className="btn-call-action decline" title="Decline Call">
+            <>
+              <button
+                type="button"
+                onClick={endCall}
+                className="btn btn-danger"
+                style={{
+                  borderRadius: 'var(--radius-avatar)',
+                  width: '56px',
+                  height: '56px',
+                  padding: 0,
+                }}
+                title="Decline"
+              >
                 <PhoneOff size={22} />
               </button>
-              <button onClick={answerCall} className="btn-call-action accept" title="Answer Call">
+              <button
+                type="button"
+                onClick={answerCall}
+                className="btn btn-primary"
+                style={{
+                  borderRadius: 'var(--radius-avatar)',
+                  width: '56px',
+                  height: '56px',
+                  padding: 0,
+                }}
+                title="Answer Call"
+              >
                 <Phone size={22} />
               </button>
-            </div>
+            </>
           ) : callStatus === 'connected' ? (
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', alignItems: 'center' }}>
-               <button onClick={endCall} className="btn-call-action decline" style={{ width: '56px', height: '56px' }}>
-                <PhoneOff size={22} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={endCall}
+              className="btn btn-danger"
+              style={{
+                borderRadius: 'var(--radius-avatar)',
+                width: '56px',
+                height: '56px',
+                padding: 0,
+              }}
+              title="End Call"
+            >
+              <PhoneOff size={22} />
+            </button>
           ) : null}
         </div>
       </div>

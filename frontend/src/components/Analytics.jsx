@@ -1,50 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Moon, ShieldAlert, Calendar } from 'lucide-react';
+import { BarChart3, Calendar, Moon, ShieldAlert, TrendingUp } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  ComposedChart, Bar, Line, Legend
+  Area,
+  AreaChart,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { useAuth } from '../context/AuthContext';
+import { useApiData } from '../hooks/useApiData';
+
+const CustomMoodTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        className="card card-padding-sm"
+        style={{ border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+      >
+        <p className="text-caption" style={{ marginBottom: '2px' }}>
+          {label}
+        </p>
+        <p style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '0.875rem' }}>
+          {payload[0].payload.mood_type.charAt(0).toUpperCase() +
+            payload[0].payload.mood_type.slice(1)}
+          : {payload[0].value}/10
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomCorrelationTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        className="card card-padding-sm"
+        style={{ border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+      >
+        <p className="text-caption" style={{ marginBottom: '2px' }}>
+          {label}
+        </p>
+        {payload.map((entry, index) => (
+          <p
+            key={index}
+            style={{
+              color: entry.color,
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              marginBottom: '1px',
+            }}
+          >
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Analytics() {
-  const { authenticatedFetch } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const fetchStats = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const response = await authenticatedFetch('/tracker/mood/stats');
-      const data = await response.json();
-      if (response.ok) {
-        setStats(data);
-      } else {
-        setError('Could not fetch analytics statistics');
-      }
-    } catch (err) {
-      setError(err.message || 'Error communicating with database');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  const { data: stats, loading: isLoading, error } = useApiData('/tracker/mood/stats');
 
   if (isLoading) {
-    return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Calculating neurological statistics...</div>;
+    return (
+      <div
+        className="card card-padding flex items-center justify-center"
+        style={{ minHeight: '200px' }}
+      >
+        <p className="text-caption">Loading analytics...</p>
+      </div>
+    );
   }
 
   if (error || !stats || stats.mood_history.length === 0) {
     return (
-      <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <BarChart3 size={48} style={{ color: 'var(--text-dim)', marginBottom: '1.5rem' }} />
-        <h3>Awaiting Neuro-Data Logs</h3>
-        <p style={{ maxWidth: '440px', margin: '0.5rem auto 0', fontSize: '0.9rem' }}>
-          Please log your mood and sleep in the check-in panel. Once you save at least one check-in, detailed wellness trends will populate here!
+      <div
+        className="card card-padding text-center"
+        style={{ padding: 'var(--space-10) var(--space-6)' }}
+      >
+        <div className="empty-state-icon" style={{ margin: '0 auto var(--space-4)' }}>
+          <BarChart3 size={28} />
+        </div>
+        <h3 style={{ marginBottom: 'var(--space-2)' }}>No data yet</h3>
+        <p className="text-caption" style={{ maxWidth: '400px', margin: '0 auto' }}>
+          Log your mood and sleep in the check-in panel. Your wellness trends will appear here.
         </p>
       </div>
     );
@@ -52,131 +97,128 @@ export default function Analytics() {
 
   const { mood_history, average_mood, average_sleep, average_stress, sleep_vs_mood } = stats;
 
-  const CustomMoodTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass-panel" style={{ padding: '10px', border: '1px solid var(--border-glass)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>{label}</p>
-          <p style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
-            {payload[0].payload.mood_type.charAt(0).toUpperCase() + payload[0].payload.mood_type.slice(1)}: {payload[0].value} / 10
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const CustomCorrelationTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass-panel" style={{ padding: '10px', border: '1px solid var(--border-glass)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color, fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '2px' }}>
-              {entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Top Level Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-        
-        <div className="glass-panel stat-card">
+    <div className="flex flex-col gap-4">
+      {/* Stat Cards */}
+      <div className="bento-grid bento-grid-4">
+        <div className="card stat-card">
           <div className="stat-icon mood">
-            <TrendingUp size={24} />
+            <TrendingUp size={20} />
           </div>
           <div>
-            <div className="stat-value text-primary">{average_mood}</div>
-            <div className="stat-label">Avg Mood Score</div>
+            <div className="stat-value">{average_mood}</div>
+            <div className="stat-label">Avg Mood</div>
           </div>
         </div>
 
-        <div className="glass-panel stat-card">
+        <div className="card stat-card">
           <div className="stat-icon sleep">
-            <Moon size={24} />
+            <Moon size={20} />
           </div>
           <div>
-            <div className="stat-value text-primary">{average_sleep}h</div>
-            <div className="stat-label">Avg Sleep Duration</div>
+            <div className="stat-value">{average_sleep}h</div>
+            <div className="stat-label">Avg Sleep</div>
           </div>
         </div>
 
-        <div className="glass-panel stat-card">
+        <div className="card stat-card">
           <div className="stat-icon stress">
-            <ShieldAlert size={24} />
+            <ShieldAlert size={20} />
           </div>
           <div>
-            <div className="stat-value text-primary">{average_stress}</div>
-            <div className="stat-label">Avg Stress Index</div>
+            <div className="stat-value">{average_stress}</div>
+            <div className="stat-label">Avg Stress</div>
           </div>
         </div>
 
-        <div className="glass-panel stat-card">
+        <div className="card stat-card">
           <div className="stat-icon habits">
-            <Calendar size={24} />
+            <Calendar size={20} />
           </div>
           <div>
-            <div className="stat-value text-primary">{mood_history.length}</div>
+            <div className="stat-value">{mood_history.length}</div>
             <div className="stat-label">Days Tracked</div>
           </div>
         </div>
-
       </div>
 
-      {/* Grid of Interactive Charts via Recharts */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.5rem' }}>
-        
-        {/* Mood Area Chart */}
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h4 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.25rem' }}>Mood Trajectory Over Time</h4>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Advanced visualization of mental vibrancy</span>
-          
-          <div style={{ width: '100%', height: 250, marginTop: '1.5rem' }}>
+      {/* Charts */}
+      <div className="bento-grid bento-grid-2">
+        {/* Mood Chart */}
+        <div className="card card-padding">
+          <h4 style={{ marginBottom: 'var(--space-1)' }}>Mood Over Time</h4>
+          <span className="text-caption">Your recent mood trajectory</span>
+
+          <div style={{ width: '100%', height: 220, marginTop: 'var(--space-4)' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={mood_history} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2D6A4F" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#2D6A4F" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" fontSize={12} tickMargin={10} />
-                <YAxis domain={[1, 10]} stroke="rgba(255,255,255,0.3)" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E0DD" vertical={false} />
+                <XAxis dataKey="date" stroke="#9C9C96" fontSize={11} tickMargin={8} />
+                <YAxis domain={[1, 10]} stroke="#9C9C96" fontSize={11} />
                 <RechartsTooltip content={<CustomMoodTooltip />} />
-                <Area type="monotone" dataKey="mood_rating" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorMood)" />
+                <Area
+                  type="monotone"
+                  dataKey="mood_rating"
+                  stroke="#2D6A4F"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorMood)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Sleep vs Stress Correlation Chart */}
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h4 style={{ fontFamily: 'var(--font-display)', marginBottom: '0.25rem' }}>Sleep vs. Stress Correlation</h4>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analysis of rest impacts on stress indices</span>
-          
-          <div style={{ width: '100%', height: 250, marginTop: '1.5rem' }}>
+        {/* Sleep vs Stress Chart */}
+        <div className="card card-padding">
+          <h4 style={{ marginBottom: 'var(--space-1)' }}>Sleep vs. Stress</h4>
+          <span className="text-caption">How rest impacts your stress levels</span>
+
+          <div style={{ width: '100%', height: 220, marginTop: 'var(--space-4)' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={sleep_vs_mood} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" fontSize={12} tickMargin={10} />
-                <YAxis yAxisId="left" domain={[0, 12]} stroke="rgba(255,255,255,0.3)" fontSize={12} />
-                <YAxis yAxisId="right" orientation="right" domain={[1, 10]} stroke="rgba(255,255,255,0.3)" fontSize={12} />
+              <ComposedChart
+                data={sleep_vs_mood}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E0DD" vertical={false} />
+                <XAxis dataKey="date" stroke="#9C9C96" fontSize={11} tickMargin={8} />
+                <YAxis yAxisId="left" domain={[0, 12]} stroke="#9C9C96" fontSize={11} />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={[1, 10]}
+                  stroke="#9C9C96"
+                  fontSize={11}
+                />
                 <RechartsTooltip content={<CustomCorrelationTooltip />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                <Bar yAxisId="left" dataKey="sleep_hours" name="Sleep (Hours)" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
-                <Line yAxisId="right" type="monotone" dataKey="stress_level" name="Stress (1-10)" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                <Bar
+                  yAxisId="left"
+                  dataKey="sleep_hours"
+                  name="Sleep (hrs)"
+                  fill="#457B9D"
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="stress_level"
+                  name="Stress"
+                  stroke="#C1292E"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
-
       </div>
     </div>
   );

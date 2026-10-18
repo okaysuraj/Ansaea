@@ -1,5 +1,4 @@
-import React from 'react';
-import { Video, Settings } from 'lucide-react';
+import { Settings, Video } from 'lucide-react';
 
 export default function ConsultationSetup() {
   return (
@@ -9,12 +8,25 @@ export default function ConsultationSetup() {
       </div>
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(99, 102, 241, 0.1)',
+              color: 'var(--color-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <Video size={24} />
           </div>
           <div>
             <h3 style={{ fontSize: '1.2rem' }}>Telemedicine Configuration</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Configure your camera, microphone, and waiting room settings.</p>
+            <p style={{ color: 'var(--text-muted)' }}>
+              Configure your camera, microphone, and waiting room settings.
+            </p>
           </div>
         </div>
 

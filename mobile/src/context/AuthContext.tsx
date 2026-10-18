@@ -1,199 +1,145 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
 import { router } from 'expo-router';
-import { Platform } from 'react-native';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
-  sendEmailVerification
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signOut,
 } from 'firebase/auth';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { auth } from '../firebase';
+import { fetchApi, readJson } from '../utils/api';
+import { AuthContext, type User } from './useAuth';
 
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-
-axios.defaults.baseURL = API_URL;
-
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  role: string;
+function routeByRole(role: string) {
+  switch (role) {
+    case 'doctor':
+      router.replace('/(doctor)/dashboard');
+      break;
+    case 'admin':
+      router.replace('/(admin)/dashboard');
+      break;
+    case 'lab':
+      router.replace('/(lab)/dashboard');
+      break;
+    case 'pharmacy':
+      router.replace('/(pharmacy)/dashboard');
+      break;
+    default:
+      router.replace('/(patient)/dashboard');
+  }
 }
 
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
-  register: (username: string, email: string, password?: string, role?: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  loading: boolean;
-  authenticatedFetch: (endpoint: string, options?: RequestInit) => Promise<Response>;
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something went wrong. Please try again.';
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        if (firebaseUser.emailVerified) {
-          try {
-            const idToken = await firebaseUser.getIdToken(true); // Force refresh token to get latest claims
-            
-            // Fetch real role and username from the backend database
-            const res = await fetch(`${API_URL}/api/users/me`, {
-              headers: { 'Authorization': `Bearer ${idToken}` }
-            });
-            const dbUser = await res.json();
-            
-            const fetchedUser = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              username: dbUser.username || firebaseUser.email?.split('@')[0] || '',
-              role: dbUser.role || "patient" 
-            };
-            setUser(fetchedUser);
-            setToken(idToken);
-            routeByRole(fetchedUser.role);
-          } catch (err) {
-             console.error("Failed to fetch user profile", err);
-             setUser(null);
-             setToken(null);
+      try {
+        if (!firebaseUser?.emailVerified) {
+          if (active) {
+            setUser(null);
+            setToken(null);
           }
-        } else {
+          return;
+        }
+
+        const idToken = await firebaseUser.getIdToken();
+        const profile = await readJson(await fetchApi('/users/me', {}, idToken));
+        if (active && auth.currentUser === firebaseUser) {
+          setUser(profile);
+          setToken(idToken);
+          routeByRole(profile.role);
+        }
+      } catch {
+        if (active && auth.currentUser === firebaseUser) {
           setUser(null);
           setToken(null);
         }
-      } else {
-        setUser(null);
-        setToken(null);
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
-  const register = async (username: string, email: string, password?: string, role = "patient") => {
-    try {
-      if (!password) throw new Error("Password is required for registration.");
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      const tempToken = await userCredential.user.getIdToken();
-      await fetch(`${API_URL}/api/users/register`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
-        },
-        body: JSON.stringify({ role, username })
-      });
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    setUser(null);
+    setToken(null);
+    router.replace('/');
+  }, []);
 
-      await sendEmailVerification(userCredential.user);
-      
-      await signOut(auth); // Force them to login after verifying email
-      
+  const register = async (username: string, email: string, password?: string, role = 'patient') => {
+    try {
+      if (!password) throw new Error('Password is required for registration.');
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await firebaseUser.getIdToken();
+      await readJson(
+        await fetchApi(
+          '/users/register',
+          {
+            method: 'POST',
+            body: JSON.stringify({ role, username }),
+          },
+          idToken,
+        ),
+      );
+      await sendEmailVerification(firebaseUser);
+      await signOut(auth);
       return { success: true };
-    } catch (error: any) {
-      console.error(error);
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: errorMessage(error) };
     }
   };
 
   const login = async (email: string, password?: string) => {
     try {
-      if (!password) throw new Error("Password is required.");
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Strict Email Verification check
-      if (!userCredential.user.emailVerified) {
+      if (!password) throw new Error('Password is required.');
+      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
+      if (!firebaseUser.emailVerified) {
         await signOut(auth);
-        return { success: false, error: 'Please verify your email address before logging in.' };
+        throw new Error('Please verify your email address before logging in.');
       }
-      
       return { success: true };
-    } catch (error: any) {
-      console.error(error);
-      return { success: false, error: error.message || 'Login failed' };
+    } catch (error) {
+      return { success: false, error: errorMessage(error) };
     }
   };
 
-  const routeByRole = (role: string) => {
-    // Only route if we are currently not on an authenticated screen (e.g. at login screen)
-    switch (role) {
-      case 'doctor':
-        router.replace('/(doctor)/dashboard');
-        break;
-      case 'admin':
-        router.replace('/(admin)/dashboard');
-        break;
-      case 'lab':
-        router.replace('/(lab)/dashboard');
-        break;
-      case 'pharmacy':
-        router.replace('/(pharmacy)/dashboard');
-        break;
-      default:
-        router.replace('/(patient)/dashboard');
-    }
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setToken(null);
-    router.replace('/');
-  };
-
-  const authenticatedFetch = async (endpoint: string, options: RequestInit = {}) => {
-    try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      };
-
-      if (auth.currentUser && auth.currentUser.emailVerified) {
-        const idToken = await auth.currentUser.getIdToken();
-        (headers as Record<string, string>)['Authorization'] = `Bearer ${idToken}`;
-      } else if (token) {
-        (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-      } else {
-        throw new Error("No valid authentication token found. Please login.");
+  // Screens can depend on this callback without refetching on every auth render.
+  const authenticatedFetch = useCallback(
+    async (endpoint: string, options: RequestInit = {}) => {
+      if (!auth.currentUser?.emailVerified) {
+        throw new Error('Please log in with a verified email address.');
       }
-
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-      
-      if (response.status === 401 || response.status === 403) {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetchApi(endpoint, options, idToken);
+      // A forbidden action does not invalidate an otherwise valid session.
+      if (response.status === 401) {
         await logout();
+        throw new Error('Session expired. Please log in again.');
       }
-      
       return response;
-    } catch (e) {
-      console.error('Fetch error:', e);
-      throw e;
-    }
-  };
+    },
+    [logout],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading, authenticatedFetch }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout, authenticatedFetch }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+}
