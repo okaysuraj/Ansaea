@@ -78,5 +78,6 @@ for route_module in (
 
 
 @app.get("/")
+@app.head("/", include_in_schema=False)
 async def root():
     return {"message": "Ansaea Backend API is running successfully on PostgreSQL."}
